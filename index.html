@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CD | Realtime Portfolio</title>
+    <meta property="og:type" content="website">
+<meta property="og:url" content="https://link-web-cua-ban.com/"> <meta property="og:title" content="Hoàng Nhật | Premium Portfolio">
+<meta property="og:description" content="Khám phá hệ sinh thái sản phẩm sáng tạo và các dự án Web hiện đại của Hoàng Nhật.">
+<meta property="og:image" content="https://i.imgur.com/your-image.jpg"> <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Hoàng Nhật | Premium Portfolio">
+<meta name="twitter:description" content="Hệ thống Portfolio tự động hóa và Realtime Likes.">
+<meta name="twitter:image" content="https://i.imgur.com/your-image.jpg">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
@@ -219,7 +226,10 @@
         const auth = getAuth(app);
         const gallery = document.getElementById('dynamic-gallery');
         const filterArea = document.getElementById('tag-filters');
-        
+        // Đoạn logic này tự động chụp ảnh màn hình link web bạn dán vào
+const screenshotUrl = item.link && item.link.startsWith('http') 
+    ? `https://s.wordpress.com/mshots/v1/${encodeURIComponent(item.link)}?w=800` 
+    : `link-anh-mac-dinh.jpg`;
         window.projectsData = [];
         window.currentFilter = 'Tất cả';
         let isAdmin = false;
