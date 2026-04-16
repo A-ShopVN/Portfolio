@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Hoàng Nhật | Realtime Portfolio</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+        /* =========================================
+           1. BẢNG MÀU ĐỘNG (LIGHT / DARK THEME)
+           ========================================= */
+        :root[data-theme="dark"] {
+            --bg-base: #050505; --text-main: #f8fafc; --text-muted: #94a3b8;
+            --glass-bg: rgba(255, 255, 255, 0.03); --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-shine: rgba(255, 255, 255, 0.1); --accent: #38bdf8;
+            --blob-1: #1e3a8a; --blob-2: #4c1d95; --blob-3: #0f766e;
+            --shadow-soft: 0 10px 40px rgba(0,0,0,0.5);
+        }
+
+        :root[data-theme="light"] {
+            --bg-base: #f8fafc; --text-main: #0f172a; --text-muted: #64748b;
+            --glass-bg: rgba(255, 255, 255, 0.7); --glass-border: rgba(0, 0, 0, 0.06);
+            --glass-shine: rgba(255, 255, 255, 0.8); --accent: #0284c7;
+            --blob-1: #bae6fd; --blob-2: #e9d5ff; --blob-3: #ccfbf1;
+            --shadow-soft: 0 10px 40px rgba(0,0,0,0.05);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-base); color: var(--text-main); min-height: 100vh; overflow-x: hidden; transition: background-color 0.4s ease, color 0.4s ease; }
+
+        /* NỀN CỰC QUANG */
+        .aurora { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; filter: blur(100px); opacity: 0.7; pointer-events: none; }
+        .blob { position: absolute; border-radius: 50%; animation: float 30s infinite alternate ease-in-out; }
+        .b1 { top: -20%; left: -10%; width: 60vw; height: 60vh; background: var(--blob-1); }
+        .b2 { bottom: -20%; right: -10%; width: 50vw; height: 50vh; background: var(--blob-2); animation-delay: -7s; }
+        .b3 { top: 30%; left: 40%; width: 40vw; height: 40vh; background: var(--blob-3); animation-delay: -14s; }
+        @keyframes float { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(8vw, 8vh) scale(1.1); } }
+
+        .glass { background: var(--glass-bg); backdrop-filter: blur(24px) saturate(120%); -webkit-backdrop-filter: blur(24px) saturate(120%); border: 1px solid var(--glass-border); border-top: 1px solid var(--glass-shine); border-left: 1px solid var(--glass-shine); border-radius: 24px; box-shadow: var(--shadow-soft); transition: all 0.4s ease; }
+
+        /* NAVBAR */
+        .nav-wrapper { position: fixed; top: 24px; left: 50%; transform: translateX(-50%); width: auto; z-index: 1000; }
+        nav { display: flex; gap: 8px; padding: 8px; border-radius: 100px; align-items: center; }
+        .nav-btn { background: transparent; border: none; color: var(--text-muted); font-weight: 600; font-size: 0.95rem; padding: 10px 24px; border-radius: 100px; cursor: pointer; transition: 0.3s; }
+        .nav-btn.active { background: var(--text-main); color: var(--bg-base); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .theme-btn { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: transparent; border: none; color: var(--text-main); font-size: 1.2rem; cursor: pointer; transition: 0.3s; }
+        .theme-btn:hover { background: rgba(128,128,128,0.1); }
+
+        main { max-width: 1000px; margin: 0 auto; padding: 140px 20px 80px; }
+        .page { display: none; opacity: 0; transform: translateY(15px); animation: pageIn 0.5s ease forwards; }
+        .page.active { display: block; }
+        @keyframes pageIn { to { opacity: 1; transform: translateY(0); } }
+
+        /* HERO SECTION */
+        .hero { display: flex; flex-wrap: wrap; gap: 50px; align-items: center; justify-content: space-between; }
+        .hero-text { flex: 1; min-width: 300px; }
+        .hero-text h1 { font-size: clamp(3rem, 6vw, 4.5rem); font-weight: 800; line-height: 1.1; letter-spacing: -1.5px; margin-bottom: 20px; }
+        .hero-text h1 span { color: var(--accent); }
+        .hero-text p { font-size: 1.1rem; color: var(--text-muted); line-height: 1.8; margin-bottom: 35px; max-width: 480px; }
+        .btn-primary { display: inline-flex; align-items: center; justify-content: center; padding: 14px 36px; border-radius: 100px; background: var(--text-main); color: var(--bg-base); font-weight: 700; border: none; cursor: pointer; font-size: 1rem; transition: transform 0.2s; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .btn-primary:active { transform: scale(0.96); }
+
+        .image-container { width: 340px; aspect-ratio: 1; border-radius: 40px; overflow: hidden; display: flex; align-items: center; justify-content: center; padding: 15px; flex-shrink: 0; }
+        .image-container img { width: 100%; height: 100%; object-fit: cover; border-radius: 28px; filter: grayscale(5%) contrast(1.05); transition: 0.5s ease; }
+        .image-container:hover img { transform: scale(1.02); filter: grayscale(0%); }
+
+        /* BỘ LỌC TAGS */
+        .filter-container { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 40px; }
+        .filter-chip { padding: 8px 20px; border-radius: 50px; background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--text-muted); cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: 0.3s; }
+        .filter-chip:hover { border-color: var(--accent); color: var(--text-main); }
+        .filter-chip.active { background: var(--text-main); color: var(--bg-base); border-color: var(--text-main); }
+
+        /* GIAN TRƯNG BÀY */
+        .section-header { text-align: center; margin-bottom: 40px; }
+        .section-header h2 { font-size: clamp(2rem, 4vw, 2.8rem); font-weight: 800; letter-spacing: -1px; }
+        .section-header p { color: var(--text-muted); margin-top: 10px; font-size: 1.1rem; }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px; }
+        
+        .card-wrapper { position: relative; height: 100%; animation: pageIn 0.4s ease forwards; }
+        .card { display: flex; flex-direction: column; overflow: hidden; text-decoration: none; color: var(--text-main); padding: 0; height: 100%; }
+        .card:hover { transform: translateY(-8px); border-color: var(--accent); box-shadow: var(--shadow-soft); }
+
+        /* NÚT LIKE THỜI GIAN THỰC */
+        .like-btn {
+            position: absolute; bottom: 12px; right: 12px; z-index: 10;
+            background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            padding: 8px 14px; border-radius: 50px; display: flex; align-items: center; gap: 6px;
+            color: white; font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: 0.3s;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .like-btn:hover { background: rgba(0, 0, 0, 0.7); transform: translateY(-3px) scale(1.05); }
+        .heart-icon { width: 18px; height: 18px; transition: 0.3s; stroke-width: 2; }
+        .heart-icon.liked { stroke: #ef4444; fill: #ef4444; filter: drop-shadow(0 0 6px rgba(239,68,68,0.8)); }
+        
+        @keyframes heartPop { 0% { transform: scale(1); } 50% { transform: scale(1.5); } 100% { transform: scale(1); } }
+        .pop { animation: heartPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+        /* NÚT THAO TÁC CỦA ADMIN */
+        .action-group { position: absolute; top: 8px; right: 8px; display: flex; gap: 8px; z-index: 10; }
+        .action-btn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--glass-border); color: var(--text-main); font-size: 0.9rem; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: 0.3s; backdrop-filter: blur(8px); }
+        .edit-btn { background: rgba(56, 189, 248, 0.2); }
+        .edit-btn:hover { background: rgba(56, 189, 248, 0.8); color: #fff; transform: scale(1.1); }
+        .delete-btn { background: rgba(239, 68, 68, 0.2); }
+        .delete-btn:hover { background: rgba(239, 68, 68, 0.8); color: #fff; transform: scale(1.1); }
+
+        .card-header { padding: 12px 16px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--glass-border); background: rgba(128,128,128,0.05); }
+        .dot { width: 10px; height: 10px; border-radius: 50%; background: #94a3b8; transition: 0.3s; }
+        .card:hover .dot:nth-child(1) { background: #ef4444; } .card:hover .dot:nth-child(2) { background: #f59e0b; } .card:hover .dot:nth-child(3) { background: #10b981; }
+
+        .card-preview { position: relative; width: 100%; aspect-ratio: 16/9; background: rgba(128,128,128,0.1); overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        .card-preview img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease; }
+        .card:hover .card-preview img { transform: scale(1.04); }
+        .card-preview::before { content: "Loading preview..."; position: absolute; color: var(--text-muted); font-size: 0.85rem; z-index: 0; }
+
+        .card-info { padding: 25px; flex-grow: 1; display: flex; flex-direction: column; gap: 10px; }
+        .card-info h3 { font-size: 1.3rem; font-weight: 700; letter-spacing: -0.3px; }
+        .card-info p { font-size: 0.95rem; color: var(--text-muted); line-height: 1.6; }
+        .card-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 15px; }
+        .card-tags span { font-size: 0.75rem; font-weight: 600; padding: 5px 12px; border-radius: 50px; background: rgba(128,128,128,0.05); border: 1px solid var(--glass-border); color: var(--text-muted); }
+
+        /* NÚT THÊM & ĐĂNG XUẤT CHO ADMIN */
+        #add-btn { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; border-radius: 50%; font-size: 1.6rem; cursor: pointer; justify-content: center; align-items: center; z-index: 1000; transition: 0.3s; display: none; }
+        #add-btn:hover { transform: scale(1.1) rotate(90deg); background: var(--text-main); color: var(--bg-base); }
+        
+        #logout-btn { position: fixed; bottom: 30px; left: 30px; padding: 12px 24px; border-radius: 100px; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); font-weight: 700; cursor: pointer; z-index: 1000; transition: 0.3s; backdrop-filter: blur(10px); display: none; }
+        #logout-btn:hover { background: #ef4444; color: white; }
+
+        /* SWEETALERT HÀI HÒA */
+        .swal2-popup.custom-swal { background: var(--bg-base) !important; color: var(--text-main) !important; border: 1px solid var(--glass-border) !important; border-radius: 24px !important; box-shadow: var(--shadow-soft) !important; transition: background 0.4s ease, color 0.4s ease; }
+        .swal2-title { color: var(--text-main) !important; font-family: 'Plus Jakarta Sans', sans-serif !important; }
+        .swal2-html-container { color: var(--text-muted) !important; }
+        .swal2-input { background: rgba(128,128,128,0.05) !important; color: var(--text-main) !important; border: 1px solid var(--glass-border) !important; border-radius: 12px !important; transition: all 0.3s; }
+        .swal2-input:focus { border-color: var(--accent) !important; box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2) !important; }
+        .swal2-confirm { background: var(--text-main) !important; color: var(--bg-base) !important; border-radius: 100px !important; font-weight: 700 !important; padding: 12px 30px !important; }
+        .swal2-cancel, .swal2-deny { border-radius: 100px !important; background: transparent !important; border: 1px solid var(--glass-border) !important; color: var(--text-main) !important; padding: 12px 30px !important; }
+
+        @media (max-width: 768px) {
+            .hero { flex-direction: column-reverse; text-align: center; gap: 30px; }
+            .image-container { width: 280px; }
+            .hero-text p { margin: 20px auto 30px; }
+            #logout-btn { padding: 10px 16px; font-size: 0.85rem; bottom: 20px; left: 20px; }
+            #add-btn { bottom: 20px; right: 20px; width: 50px; height: 50px; font-size: 1.4rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="aurora"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+
+    <div class="nav-wrapper">
+        <nav class="glass">
+            <button class="nav-btn active" onclick="switchTab('home')">Tổng quan</button>
+            <button class="nav-btn" onclick="switchTab('projects')">Dự án</button>
+            <button class="theme-btn" onclick="toggleTheme()" title="Đổi chủ đề">🌓</button>
+        </nav>
+    </div>
+
+    <main>
+        <section id="home" class="page active">
+            <div class="hero">
+                <div class="hero-text">
+                    <span style="font-size: 0.9rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--text-muted); display: block; margin-bottom: 12px;">Web Developer</span>
+                    <h1>Canh<span> VIP:)</span></h1>
+                    <p>Hệ thống tự động hóa Portfolio thế hệ mới. Trải nghiệm nút Thả Tim Realtime siêu mượt cùng bộ lọc dự án thông minh.</p>
+                    <button class="btn-primary" onclick="switchTab('projects')">Xem Hệ Sinh Thái</button>
+                </div>
+                <div class="image-container glass">
+                    <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=600&auto=format&fit=crop" alt="Hoàng Nhật">
+                </div>
+            </div>
+        </section>
+
+        <section id="projects" class="page">
+            <div class="section-header">
+                <h2>Danh sách <span>Dự án</span></h2>
+                <p>Thả tim để ủng hộ tác giả. Tự động cập nhật thời gian thực!</p>
+            </div>
+            
+            <div id="tag-filters" class="filter-container"></div>
+            <div id="dynamic-gallery" class="grid"></div>
+        </section>
+    </main>
+
+    <div id="add-btn" class="glass" title="Thêm dự án">➕</div>
+    <button id="logout-btn" title="Thoát quyền Admin" onclick="logoutAdmin()">Đăng xuất Admin</button>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+        // THÊM: increment, onSnapshot để làm tính năng Realtime Likes
+        import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, increment, onSnapshot } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA9qI1khd-06da2iGXWqiXHCb0VCCJlS80",
+            authDomain: "canhportfolio.firebaseapp.com",
+            projectId: "canhportfolio",
+            storageBucket: "canhportfolio.firebasestorage.app",
+            messagingSenderId: "986040946035",
+            appId: "1:986040946035:web:c2a3a6025d34118c3d0906"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const gallery = document.getElementById('dynamic-gallery');
+        const filterArea = document.getElementById('tag-filters');
+        
+        window.projectsData = [];
+        window.currentFilter = 'Tất cả';
+        let isAdmin = false;
+
+        // AUTHENTICATION
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                isAdmin = true;
+                document.getElementById('add-btn').style.display = 'flex';
+                document.getElementById('logout-btn').style.display = 'block';
+            } else {
+                isAdmin = false;
+                document.getElementById('add-btn').style.display = 'none';
+                document.getElementById('logout-btn').style.display = 'none';
+                showWelcomePopup(); 
+            }
+            initRealtime(); // Kích hoạt bộ máy Realtime
+        });
+
+        // POPUP PHÂN LUỒNG
+        async function showWelcomePopup() {
+            const { isDenied } = await Swal.fire({
+                title: 'Chào mừng bạn!',
+                text: 'Bạn muốn truy cập Portfolio với tư cách nào?',
+                showCancelButton: true, showDenyButton: true, showConfirmButton: false, 
+                cancelButtonText: 'Khách (Chỉ xem)', denyButtonText: 'Admin (Quản lý)',
+                allowOutsideClick: false, allowEscapeKey: false, customClass: { popup: 'custom-swal' }
+            });
+            if (isDenied) showLoginPopup();
+            else Swal.fire({ icon: 'info', title: 'Chế độ Khách', text: 'Bạn có thể xem và thả tim cho các dự án!', timer: 2000, showConfirmButton: false, customClass: { popup: 'custom-swal' } });
+        }
+
+        async function showLoginPopup() {
+            const { value: formValues } = await Swal.fire({
+                title: 'Đăng nhập Admin',
+                html: `<input id="sw-email" type="email" class="swal2-input" placeholder="Email"><input id="sw-pass" type="password" class="swal2-input" placeholder="Mật khẩu">`,
+                focusConfirm: false, showCancelButton: true, confirmButtonText: 'Xác nhận', cancelButtonText: 'Quay lại', customClass: { popup: 'custom-swal' },
+                preConfirm: () => ({ e: document.getElementById('sw-email').value, p: document.getElementById('sw-pass').value })
+            });
+            if (formValues && formValues.e && formValues.p) {
+                Swal.fire({ title: 'Đang xác thực...', didOpen: () => Swal.showLoading(), customClass: { popup: 'custom-swal' } });
+                try {
+                    await signInWithEmailAndPassword(auth, formValues.e, formValues.p);
+                    Swal.fire({ icon: 'success', title: 'Quyền lực mở ra!', text: 'Đăng nhập Admin thành công.', timer: 1500, showConfirmButton: false, customClass: { popup: 'custom-swal' } });
+                } catch (error) { Swal.fire({ icon: 'error', title: 'Lỗi', text: 'Sai Email hoặc Mật khẩu.', customClass: { popup: 'custom-swal' } }).then(() => showLoginPopup()); }
+            } else if (!formValues) showWelcomePopup();
+        }
+
+        window.logoutAdmin = async () => {
+            await signOut(auth);
+            Swal.fire({ icon: 'success', title: 'Đã Đăng xuất', timer: 1000, showConfirmButton: false, customClass: { popup: 'custom-swal' } });
+        }
+
+        // ===================================
+        // BỘ MÁY REALTIME: TỰ ĐỘNG CẬP NHẬT KHI CÓ SỰ THAY ĐỔI
+        // ===================================
+        let isFirstLoad = true;
+        function initRealtime() {
+            onSnapshot(collection(db, "projects"), (snapshot) => {
+                if (isFirstLoad) gallery.innerHTML = '<p style="text-align:center; width:100%; color:var(--text-muted)">Đang quét dữ liệu...</p>';
+                
+                // Lưu lại Data mới
+                window.projectsData = [];
+                snapshot.docs.forEach(doc => window.projectsData.push({ id: doc.id, ...doc.data() }));
+                window.projectsData.sort((a,b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+
+                if (isFirstLoad) {
+                    isFirstLoad = false;
+                    updateTagsAndRender();
+                } else {
+                    let needsFullRender = false;
+                    snapshot.docChanges().forEach((change) => {
+                        // Nếu có dự án mới thêm hoặc xóa thì render lại cả bảng
+                        if (change.type === "added" || change.type === "removed") {
+                            needsFullRender = true;
+                        } 
+                        // CHỈNH SỬA LIKE: Chỉ chớp số thay vì render cả bảng (Cực mượt)
+                        else if (change.type === "modified") {
+                            const countSpan = document.getElementById(`like-count-${change.doc.id}`);
+                            if (countSpan) {
+                                const newLikes = change.doc.data().likes || 0;
+                                if (parseInt(countSpan.innerText) !== newLikes) {
+                                    countSpan.innerText = newLikes;
+                                    countSpan.classList.add('pop'); // Hiệu ứng nhảy số
+                                    setTimeout(() => countSpan.classList.remove('pop'), 300);
+                                }
+                            } else {
+                                // Nếu Admin sửa Nội dung/Tiêu đề, render lại toàn bộ
+                                needsFullRender = true;
+                            }
+                        }
+                    });
+                    if (needsFullRender) updateTagsAndRender();
+                }
+            });
+        }
+
+        function updateTagsAndRender() {
+            if (window.projectsData.length === 0) {
+                gallery.innerHTML = '<p style="text-align:center; width:100%; color:var(--text-muted)">Chưa có dữ liệu dự án.</p>';
+                filterArea.innerHTML = '';
+                return;
+            }
+
+            const tagsSet = new Set(['Tất cả']);
+            window.projectsData.forEach(p => { if(p.tags) p.tags.forEach(t => tagsSet.add(t)); });
+            
+            filterArea.innerHTML = '';
+            tagsSet.forEach(tag => {
+                const btn = document.createElement('div');
+                btn.className = `filter-chip ${tag === window.currentFilter ? 'active' : ''}`;
+                btn.innerText = tag;
+                btn.onclick = () => filterProjects(tag, btn);
+                filterArea.appendChild(btn);
+            });
+
+            if(!tagsSet.has(window.currentFilter)) window.currentFilter = 'Tất cả';
+            filterProjects(window.currentFilter);
+        }
+
+        window.filterProjects = (tag, element) => {
+            window.currentFilter = tag;
+            document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+            if(element) element.classList.add('active');
+            else document.querySelectorAll('.filter-chip').forEach(c => { if (c.innerText === tag) c.classList.add('active'); });
+
+            const filteredData = tag === 'Tất cả' ? window.projectsData : window.projectsData.filter(p => p.tags && p.tags.includes(tag));
+            renderProjects(filteredData);
+        }
+
+        // HÀM RENDER HTML CỦA THẺ DỰ ÁN
+        function renderProjects(data) {
+            gallery.innerHTML = '';
+            if (data.length === 0) {
+                gallery.innerHTML = '<p style="text-align:center; width:100%; color:var(--text-muted)">Không tìm thấy dự án.</p>'; return;
+            }
+
+            data.forEach(item => {
+                const screenshotUrl = item.link && item.link.startsWith('http') ? `https://s.wordpress.com/mshots/v1/${encodeURIComponent(item.link)}?w=800` : `https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=800`;
+                const tags = item.tags ? item.tags.map(t => `<span>${t}</span>`).join('') : '';
+                const domainName = item.link ? item.link.replace(/^https?:\/\//, '').split('/')[0] : 'localhost';
+                
+                // LOGIC NÚT LIKE
+                const isLiked = localStorage.getItem('liked_' + item.id) === 'true';
+                const heartColor = isLiked ? '#ef4444' : 'none';
+                const strokeColor = isLiked ? '#ef4444' : 'currentColor';
+                const likeClass = isLiked ? 'liked' : '';
+                const likesCount = item.likes || 0;
+
+                const actionButtonsHTML = isAdmin ? `
+                    <div class="action-group">
+                        <button onclick="editProject('${item.id}')" class="action-btn edit-btn" title="Sửa bài">✏️</button>
+                        <button onclick="deleteProject('${item.id}')" class="action-btn delete-btn" title="Xóa bài">🗑️</button>
+                    </div>` : '';
+
+                const card = `
+                    <div class="card-wrapper">
+                        ${actionButtonsHTML}
+                        <a href="${item.link || '#'}" target="_blank" class="glass card">
+                            <div class="card-header">
+                                <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                                <div style="font-size:0.75rem; color:var(--text-muted); margin-left:8px; font-weight:500;">${domainName}</div>
+                            </div>
+                            <div class="card-preview">
+                                <img src="${screenshotUrl}" alt="${item.title}" loading="lazy">
+                                <!-- NÚT LIKE TRÊN ẢNH -->
+                                <div class="like-btn" onclick="toggleLike(event, '${item.id}')">
+                                    <svg viewBox="0 0 24 24" stroke="${strokeColor}" fill="${heartColor}" class="heart-icon ${likeClass}">
+                                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                                    </svg>
+                                    <span id="like-count-${item.id}">${likesCount}</span>
+                                </div>
+                            </div>
+                            <div class="card-info">
+                                <h3>${item.title}</h3>
+                                <p>${item.desc}</p>
+                                <div class="card-tags">${tags}</div>
+                            </div>
+                        </a>
+                    </div>
+                `;
+                gallery.innerHTML += card;
+            });
+        }
+
+        // ===================================
+        // XỬ LÝ SỰ KIỆN CLICK VÀO NÚT LIKE
+        // ===================================
+        window.toggleLike = async (event, id) => {
+            event.preventDefault();     // Chặn không cho mở link web
+            event.stopPropagation();    // Chặn sự kiện click thẻ card
+
+            const btn = event.currentTarget;
+            const icon = btn.querySelector('.heart-icon');
+            const countSpan = document.getElementById(`like-count-${id}`);
+            const isLiked = localStorage.getItem('liked_' + id) === 'true';
+            const docRef = doc(db, "projects", id);
+
+            let currentLikes = parseInt(countSpan.innerText) || 0;
+
+            // Kích hoạt hiệu ứng Pop nhỏ cho Icon
+            icon.classList.add('pop');
+            setTimeout(() => icon.classList.remove('pop'), 300);
+
+            try {
+                if (isLiked) {
+                    // Unlike
+                    localStorage.removeItem('liked_' + id);
+                    icon.classList.remove('liked');
+                    icon.setAttribute('fill', 'none');
+                    icon.setAttribute('stroke', 'currentColor');
+                    countSpan.innerText = Math.max(0, currentLikes - 1);
+                    
+                    await updateDoc(docRef, { likes: increment(-1) });
+                } else {
+                    // Like
+                    localStorage.setItem('liked_' + id, 'true');
+                    icon.classList.add('liked');
+                    icon.setAttribute('fill', '#ef4444');
+                    icon.setAttribute('stroke', '#ef4444');
+                    countSpan.innerText = currentLikes + 1;
+                    
+                    await updateDoc(docRef, { likes: increment(1) });
+                }
+            } catch (error) {
+                console.error("Lỗi cập nhật Like:", error);
+                Swal.fire({ icon: 'error', title: 'Úi!', text: 'Không thể thả tim lúc này. Hãy kiểm tra lại Firebase Rules.', toast: true, position: 'bottom-end', showConfirmButton: false, timer: 3000, customClass: { popup: 'custom-swal' } });
+            }
+        }
+
+        // ===================================
+        // THÊM, SỬA, XÓA DỰ ÁN
+        // ===================================
+        document.getElementById('add-btn').onclick = async () => {
+            if(!isAdmin) return;
+            const { value: f } = await Swal.fire({
+                title: 'Thêm Dự Án Mới',
+                html: `<input id="sw-t" class="swal2-input" placeholder="Tên dự án"><input id="sw-d" class="swal2-input" placeholder="Mô tả ngắn"><input id="sw-l" class="swal2-input" placeholder="Link Website"><input id="sw-g" class="swal2-input" placeholder="Tags (Cắt bằng dấu phẩy)">`,
+                preConfirm: () => ({ t: document.getElementById('sw-t').value, d: document.getElementById('sw-d').value, l: document.getElementById('sw-l').value, g: document.getElementById('sw-g').value }),
+                showCancelButton: true, confirmButtonText: 'Đăng Lên', cancelButtonText: 'Hủy', customClass: { popup: 'custom-swal' }
+            });
+
+            if (f && f.t && f.d) {
+                Swal.fire({ title: 'Đang lưu...', didOpen: () => Swal.showLoading(), customClass: { popup: 'custom-swal' } });
+                try {
+                    await addDoc(collection(db, "projects"), {
+                        title: f.t, desc: f.d, link: f.l,
+                        tags: f.g.split(',').map(x => x.trim()).filter(x => x !== ""),
+                        likes: 0, // Mặc định bài mới có 0 lượt thích
+                        createdAt: serverTimestamp()
+                    });
+                    Swal.fire({ icon: 'success', title: 'Đã lưu!', timer: 1500, showConfirmButton: false, customClass: { popup: 'custom-swal' } });
+                } catch (e) { Swal.fire({ icon: 'error', title: 'Lỗi!', text: e.message, customClass: { popup: 'custom-swal' }}); }
+            }
+        };
+
+        window.editProject = async (id) => {
+            if(!isAdmin) return;
+            const project = window.projectsData.find(p => p.id === id);
+            if (!project) return;
+
+            const { value: f } = await Swal.fire({
+                title: 'Sửa Dự Án',
+                html: `<input id="sw-t" class="swal2-input" placeholder="Tên dự án" value="${project.title}"><input id="sw-d" class="swal2-input" placeholder="Mô tả ngắn" value="${project.desc}"><input id="sw-l" class="swal2-input" placeholder="Link Website" value="${project.link || ''}"><input id="sw-g" class="swal2-input" placeholder="Tags (Cắt bằng dấu phẩy)" value="${(project.tags || []).join(', ')}">`,
+                preConfirm: () => ({ t: document.getElementById('sw-t').value, d: document.getElementById('sw-d').value, l: document.getElementById('sw-l').value, g: document.getElementById('sw-g').value }),
+                showCancelButton: true, confirmButtonText: 'Cập nhật', cancelButtonText: 'Hủy', customClass: { popup: 'custom-swal' }
+            });
+
+            if (f && f.t && f.d) {
+                Swal.fire({ title: 'Đang cập nhật...', didOpen: () => Swal.showLoading(), customClass: { popup: 'custom-swal' } });
+                try {
+                    await updateDoc(doc(db, "projects", id), {
+                        title: f.t, desc: f.d, link: f.l,
+                        tags: f.g.split(',').map(x => x.trim()).filter(x => x !== "")
+                    });
+                    Swal.fire({ icon: 'success', title: 'Đã Cập Nhật!', timer: 1500, showConfirmButton: false, customClass: { popup: 'custom-swal' } });
+                } catch (e) { Swal.fire({ icon: 'error', title: 'Lỗi!', text: e.message, customClass: { popup: 'custom-swal' }}); }
+            }
+        }
+
+        window.deleteProject = async (id) => {
+            if(!isAdmin) return;
+            const { isConfirmed } = await Swal.fire({ title: 'Chắc chắn xóa chứ?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'Xóa vĩnh viễn', customClass: { popup: 'custom-swal' } });
+            if (isConfirmed) {
+                Swal.fire({ title: 'Đang xóa...', didOpen: () => Swal.showLoading(), customClass: { popup: 'custom-swal' } });
+                try {
+                    await deleteDoc(doc(db, "projects", id));
+                    Swal.fire({ icon: 'success', title: 'Đã Xóa', timer: 1500, showConfirmButton: false, customClass: { popup: 'custom-swal' } });
+                } catch (error) { Swal.fire({ icon: 'error', title: 'Lỗi Xóa', text: error.message, customClass: { popup: 'custom-swal' }}); }
+            }
+        }
+
+        // GIAO DIỆN CƠ BẢN
+        window.switchTab = (id) => {
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            if(id === 'home') document.querySelectorAll('.nav-btn')[0].classList.add('active');
+            if(id === 'projects') document.querySelectorAll('.nav-btn')[1].classList.add('active');
+            document.getElementById(id).classList.add('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        window.toggleTheme = () => {
+            const h = document.documentElement;
+            h.setAttribute('data-theme', h.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+        }
+    </script>
+</body>
+</html>
