@@ -144,6 +144,16 @@
             #logout-btn { padding: 10px 16px; font-size: 0.85rem; bottom: 20px; left: 20px; }
             #add-btn { bottom: 20px; right: 20px; width: 50px; height: 50px; font-size: 1.4rem; }
         }
+
+        .edit-avatar-btn {
+    position: absolute; bottom: 20px; right: 20px;
+    background: var(--text-main); color: var(--bg-base);
+    padding: 10px 18px; border-radius: 18px; font-weight: 800;
+    font-size: 0.8rem; cursor: pointer; border: none;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    display: none; z-index: 10; transition: 0.3s;
+}
+.edit-avatar-btn:hover { transform: scale(1.1); }
     </style>
 </head>
 <body>
@@ -168,7 +178,9 @@
                     <button class="btn-primary" onclick="switchTab('projects')">Xem Hệ Sinh Thái</button>
                 </div>
                 <div class="image-container glass">
-                    <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=600&auto=format&fit=crop" alt="Hoàng Nhật">
+                    <img id="admin-avatar" src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=600&auto=format&fit=crop" alt="Hoàng Nhật">
+                    
+                    <button id="btn-change-avatar" class="edit-avatar-btn" onclick="changeAvatar()">Thay ảnh 📸</button>
                 </div>
             </div>
         </section>
@@ -190,7 +202,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
         // THÊM: increment, onSnapshot để làm tính năng Realtime Likes
-        import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, increment, onSnapshot } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, getDoc, setDoc, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, increment, onSnapshot } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 
         const firebaseConfig = {
@@ -225,7 +237,40 @@
                 showWelcomePopup(); 
             }
             initRealtime(); // Kích hoạt bộ máy Realtime
+            // Thêm dòng này vào cuối hàm
+    if(document.getElementById('btn-change-avatar')) {
+        document.getElementById('btn-change-avatar').style.display = isAdmin ? 'block' : 'none';
+    }
+    initAvatarRealtime(); // Kích hoạt lắng nghe ảnh mới
         });
+
+        // Hàm thay đổi ảnh đại diện
+window.changeAvatar = async () => {
+    if (!isAdmin) return;
+    const { value: url } = await Swal.fire({
+        title: 'Thay đổi Avatar Admin',
+        input: 'url',
+        inputPlaceholder: 'Dán Link ảnh mới vào đây...',
+        showCancelButton: true,
+        confirmButtonText: 'Cập nhật',
+        customClass: { popup: 'custom-swal' }
+    });
+    if (url) {
+        try {
+            await setDoc(doc(db, "settings", "profile"), { avatarUrl: url }, { merge: true });
+            Swal.fire({ icon: 'success', title: 'Đã lưu!', timer: 1500, showConfirmButton: false });
+        } catch (e) { console.error(e); }
+    }
+};
+
+// Hàm lắng nghe ảnh thay đổi Realtime
+function initAvatarRealtime() {
+    onSnapshot(doc(db, "settings", "profile"), (d) => {
+        if (d.exists() && d.data().avatarUrl) {
+            document.getElementById('admin-avatar').src = d.data().avatarUrl;
+        }
+    });
+}
 
         // POPUP PHÂN LUỒNG
         async function showWelcomePopup() {
