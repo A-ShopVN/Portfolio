@@ -5,26 +5,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CD | Realtime Portfolio</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <style>
         /* =========================================
-           1. BẢNG MÀU ĐỘNG (LIGHT / DARK THEME)
+           1. BẢNG MÀU ĐỘNG & BIẾN CSS (SUPER GLASS)
            ========================================= */
         :root[data-theme="dark"] {
             --bg-base: #050505; --text-main: #f8fafc; --text-muted: #94a3b8;
             --glass-bg: rgba(255, 255, 255, 0.03); --glass-border: rgba(255, 255, 255, 0.08);
             --glass-shine: rgba(255, 255, 255, 0.1); --accent: #38bdf8;
+            --card-hover: rgba(255, 255, 255, 0.05);
             --blob-1: #1e3a8a; --blob-2: #4c1d95; --blob-3: #0f766e;
             --shadow-soft: 0 10px 40px rgba(0,0,0,0.5);
+            --glass-inner: inset 0 1px 1px rgba(255,255,255,0.05);
+            
+            /* Biến dành riêng cho Popup Super Glass */
+            --modal-bg: rgba(15, 15, 15, 0.4); 
+            --input-bg: rgba(255, 255, 255, 0.05);
+            --reply-box: rgba(255, 255, 255, 0.03);
+            --modal-border: rgba(255, 255, 255, 0.15);
+            --modal-shine: rgba(255, 255, 255, 0.2);
         }
 
         :root[data-theme="light"] {
             --bg-base: #f8fafc; --text-main: #0f172a; --text-muted: #64748b;
-            --glass-bg: rgba(255, 255, 255, 0.7); --glass-border: rgba(0, 0, 0, 0.06);
-            --glass-shine: rgba(255, 255, 255, 0.8); --accent: #0284c7;
+            --glass-bg: rgba(255, 255, 255, 0.6); --glass-border: rgba(0, 0, 0, 0.06);
+            --glass-shine: rgba(255, 255, 255, 0.9); --accent: #0ea5e9;
+            --card-hover: rgba(255, 255, 255, 0.9);
             --blob-1: #bae6fd; --blob-2: #e9d5ff; --blob-3: #ccfbf1;
-            --shadow-soft: 0 10px 40px rgba(0,0,0,0.05);
+            --shadow-soft: 0 10px 40px rgba(0,0,0,0.04);
+            --glass-inner: inset 0 1px 1px rgba(255,255,255,0.6);
+            
+            /* Biến dành riêng cho Popup Super Glass */
+            --modal-bg: rgba(255, 255, 255, 0.55); 
+            --input-bg: rgba(255, 255, 255, 0.7);
+            --reply-box: rgba(255, 255, 255, 0.4);
+            --modal-border: rgba(255, 255, 255, 0.6);
+            --modal-shine: rgba(255, 255, 255, 1);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -32,128 +51,246 @@
 
         /* NỀN CỰC QUANG */
         .aurora { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; filter: blur(100px); opacity: 0.7; pointer-events: none; }
-        .blob { position: absolute; border-radius: 50%; animation: float 30s infinite alternate ease-in-out; }
+        .blob { position: absolute; border-radius: 50%; animation: float 30s infinite alternate cubic-bezier(0.4, 0, 0.2, 1); }
         .b1 { top: -20%; left: -10%; width: 60vw; height: 60vh; background: var(--blob-1); }
         .b2 { bottom: -20%; right: -10%; width: 50vw; height: 50vh; background: var(--blob-2); animation-delay: -7s; }
         .b3 { top: 30%; left: 40%; width: 40vw; height: 40vh; background: var(--blob-3); animation-delay: -14s; }
         @keyframes float { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(8vw, 8vh) scale(1.1); } }
 
-        .glass { background: var(--glass-bg); backdrop-filter: blur(24px) saturate(120%); -webkit-backdrop-filter: blur(24px) saturate(120%); border: 1px solid var(--glass-border); border-top: 1px solid var(--glass-shine); border-left: 1px solid var(--glass-shine); border-radius: 24px; box-shadow: var(--shadow-soft); transition: all 0.4s ease; }
+        .glass { 
+            background: var(--glass-bg); backdrop-filter: blur(24px) saturate(120%); -webkit-backdrop-filter: blur(24px) saturate(120%); 
+            border: 1px solid var(--glass-border); border-top: 1px solid var(--glass-shine); border-left: 1px solid var(--glass-shine); 
+            border-radius: 24px; box-shadow: var(--shadow-soft), var(--glass-inner); transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); 
+        }
 
         /* NAVBAR */
         .nav-wrapper { position: fixed; top: 24px; left: 50%; transform: translateX(-50%); width: auto; z-index: 1000; }
-        nav { display: flex; gap: 8px; padding: 8px; border-radius: 100px; align-items: center; }
-        .nav-btn { background: transparent; border: none; color: var(--text-muted); font-weight: 600; font-size: 0.95rem; padding: 10px 24px; border-radius: 100px; cursor: pointer; transition: 0.3s; }
-        .nav-btn.active { background: var(--text-main); color: var(--bg-base); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .theme-btn { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: transparent; border: none; color: var(--text-main); font-size: 1.2rem; cursor: pointer; transition: 0.3s; }
-        .theme-btn:hover { background: rgba(128,128,128,0.1); }
+        nav { display: flex; gap: 6px; padding: 6px; border-radius: 100px; align-items: center; }
+        .nav-btn { background: transparent; border: none; color: var(--text-muted); font-weight: 600; font-size: 0.95rem; padding: 12px 24px; border-radius: 100px; cursor: pointer; transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1); display: flex; align-items: center; gap: 8px; }
+        .nav-btn i { font-size: 1.2rem; }
+        .nav-btn:hover { color: var(--text-main); }
+        .nav-btn.active { background: var(--text-main); color: var(--bg-base); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .theme-btn { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: transparent; border: none; color: var(--text-main); font-size: 1.2rem; cursor: pointer; transition: 0.3s; margin-left: 4px; }
+        .theme-btn:hover { background: rgba(128,128,128,0.1); transform: rotate(15deg); }
 
-        main { max-width: 1000px; margin: 0 auto; padding: 140px 20px 80px; }
-        .page { display: none; opacity: 0; transform: translateY(15px); animation: pageIn 0.5s ease forwards; }
+        main { max-width: 1100px; margin: 0 auto; padding: 140px 20px 100px; }
+        .page { display: none; opacity: 0; transform: translateY(20px); animation: pageIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .page.active { display: block; }
         @keyframes pageIn { to { opacity: 1; transform: translateY(0); } }
 
         /* HERO SECTION */
-        .hero { display: flex; flex-wrap: wrap; gap: 50px; align-items: center; justify-content: space-between; }
-        .hero-text { flex: 1; min-width: 300px; }
-        .hero-text h1 { font-size: clamp(3rem, 6vw, 4.5rem); font-weight: 800; line-height: 1.1; letter-spacing: -1.5px; margin-bottom: 20px; }
-        .hero-text h1 span { color: var(--accent); }
-        .hero-text p { font-size: 1.1rem; color: var(--text-muted); line-height: 1.8; margin-bottom: 35px; max-width: 480px; }
-        .btn-primary { display: inline-flex; align-items: center; justify-content: center; padding: 14px 36px; border-radius: 100px; background: var(--text-main); color: var(--bg-base); font-weight: 700; border: none; cursor: pointer; font-size: 1rem; transition: transform 0.2s; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .btn-primary:active { transform: scale(0.96); }
+        .hero { display: flex; flex-wrap: wrap; gap: 60px; align-items: center; justify-content: space-between; margin-bottom: 40px; }
+        .hero-text { flex: 1; min-width: 320px; }
+        .hero-text .badge { display: inline-block; padding: 8px 16px; border-radius: 50px; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--accent); background: rgba(14, 165, 233, 0.1); margin-bottom: 20px; border: 1px solid rgba(14, 165, 233, 0.2); }
+        .hero-text h1 { font-size: clamp(3.5rem, 6vw, 4.5rem); font-weight: 800; line-height: 1.1; letter-spacing: -2px; margin-bottom: 24px; }
+        .hero-text h1 span { background: linear-gradient(135deg, var(--accent), #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero-text p { font-size: 1.15rem; color: var(--text-muted); line-height: 1.8; margin-bottom: 40px; max-width: 500px; }
+        .btn-group { display: flex; gap: 16px; flex-wrap: wrap; }
+        .btn-primary { display: inline-flex; align-items: center; gap: 10px; padding: 16px 36px; border-radius: 100px; background: var(--text-main); color: var(--bg-base); font-weight: 700; border: none; cursor: pointer; font-size: 1rem; transition: 0.3s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(0,0,0,0.15); }
+        
+        .image-container { position: relative; width: 360px; aspect-ratio: 1; border-radius: 40px; overflow: hidden; display: flex; align-items: center; justify-content: center; padding: 12px; flex-shrink: 0; }
+        .image-container img { width: 100%; height: 100%; object-fit: cover; border-radius: 32px; filter: grayscale(10%) contrast(1.05); transition: 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+        .image-container:hover img { transform: scale(1.03); filter: grayscale(0%); }
 
-        .image-container { width: 340px; aspect-ratio: 1; border-radius: 40px; overflow: hidden; display: flex; align-items: center; justify-content: center; padding: 15px; flex-shrink: 0; }
-        .image-container img { width: 100%; height: 100%; object-fit: cover; border-radius: 28px; filter: grayscale(5%) contrast(1.05); transition: 0.5s ease; }
-        .image-container:hover img { transform: scale(1.02); filter: grayscale(0%); }
+        /* SKILLS SECTION */
+        .skills-grid { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 30px; }
+        .skill-tag { padding: 14px 24px; border-radius: 16px; font-weight: 600; font-size: 1rem; color: var(--text-main); display: flex; align-items: center; gap: 10px; transition: 0.3s; cursor: default; }
+        .skill-tag i { font-size: 1.4rem; color: var(--accent); }
+        .skill-tag:hover { transform: translateY(-5px); border-color: var(--accent); background: var(--card-hover); }
 
-        /* BỘ LỌC TAGS */
-        .filter-container { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 40px; }
-        .filter-chip { padding: 8px 20px; border-radius: 50px; background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--text-muted); cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: 0.3s; }
+        /* GIAN TRƯNG BÀY DỰ ÁN */
+        .section-header { margin-bottom: 50px; text-align: left; }
+        .section-header h2 { font-size: clamp(2.2rem, 4vw, 3rem); font-weight: 800; letter-spacing: -1.5px; margin-bottom: 12px; }
+        .section-header h2 span { color: var(--accent); }
+        .section-header p { color: var(--text-muted); font-size: 1.1rem; line-height: 1.6; max-width: 600px; }
+
+        .filter-container { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 40px; }
+        .filter-chip { padding: 10px 24px; border-radius: 100px; background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--text-muted); cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: 0.3s; }
         .filter-chip:hover { border-color: var(--accent); color: var(--text-main); }
-        .filter-chip.active { background: var(--text-main); color: var(--bg-base); border-color: var(--text-main); }
+        .filter-chip.active { background: var(--text-main); color: var(--bg-base); border-color: var(--text-main); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
 
-        /* GIAN TRƯNG BÀY */
-        .section-header { text-align: center; margin-bottom: 40px; }
-        .section-header h2 { font-size: clamp(2rem, 4vw, 2.8rem); font-weight: 800; letter-spacing: -1px; }
-        .section-header p { color: var(--text-muted); margin-top: 10px; font-size: 1.1rem; }
-
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 30px; }
         
-        .card-wrapper { position: relative; height: 100%; animation: pageIn 0.4s ease forwards; }
-        .card { display: flex; flex-direction: column; overflow: hidden; text-decoration: none; color: var(--text-main); padding: 0; height: 100%; }
-        .card:hover { transform: translateY(-8px); border-color: var(--accent); box-shadow: var(--shadow-soft); }
+        .card-wrapper { position: relative; height: 100%; animation: pageIn 0.5s ease forwards; }
+        .card { display: flex; flex-direction: column; overflow: hidden; text-decoration: none; color: var(--text-main); padding: 0; height: 100%; border-radius: 28px; }
+        .card:hover { transform: translateY(-10px); border-color: var(--accent); box-shadow: var(--shadow-soft), 0 20px 40px -10px rgba(0,0,0,0.1); background: var(--card-hover); }
 
-        /* NÚT LIKE THỜI GIAN THỰC */
+        .card-header { padding: 16px 20px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--glass-border); background: rgba(128,128,128,0.02); }
+        .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--text-muted); opacity: 0.4; transition: 0.4s; }
+        .card:hover .dot:nth-child(1) { background: #ef4444; opacity: 1; } .card:hover .dot:nth-child(2) { background: #f59e0b; opacity: 1; } .card:hover .dot:nth-child(3) { background: #10b981; opacity: 1; }
+
+        .card-preview { position: relative; width: 100%; aspect-ratio: 16/10; background: rgba(128,128,128,0.05); overflow: hidden; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid var(--glass-border); }
+        .card-preview img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+        .card:hover .card-preview img { transform: scale(1.06); }
+
+        /* NÚT LIKE */
         .like-btn {
-            position: absolute; bottom: 12px; right: 12px; z-index: 10;
-            background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            padding: 8px 14px; border-radius: 50px; display: flex; align-items: center; gap: 6px;
-            color: white; font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: 0.3s;
-            border: 1px solid rgba(255,255,255,0.1);
+            position: absolute; bottom: 16px; right: 16px; z-index: 10;
+            background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            padding: 8px 16px; border-radius: 50px; display: flex; align-items: center; gap: 8px;
+            color: white; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: 0.3s;
+            border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
-        .like-btn:hover { background: rgba(0, 0, 0, 0.7); transform: translateY(-3px) scale(1.05); }
-        .heart-icon { width: 18px; height: 18px; transition: 0.3s; stroke-width: 2; }
-        .heart-icon.liked { stroke: #ef4444; fill: #ef4444; filter: drop-shadow(0 0 6px rgba(239,68,68,0.8)); }
-        
+        .like-btn:hover { background: rgba(0, 0, 0, 0.8); transform: translateY(-3px) scale(1.05); }
+        .heart-icon { font-size: 1.2rem; transition: 0.3s; }
+        .heart-icon.liked { color: #ef4444; }
         @keyframes heartPop { 0% { transform: scale(1); } 50% { transform: scale(1.5); } 100% { transform: scale(1); } }
         .pop { animation: heartPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 
-        /* NÚT THAO TÁC CỦA ADMIN */
-        .action-group { position: absolute; top: 8px; right: 8px; display: flex; gap: 8px; z-index: 10; }
-        .action-btn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--glass-border); color: var(--text-main); font-size: 0.9rem; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: 0.3s; backdrop-filter: blur(8px); }
-        .edit-btn { background: rgba(56, 189, 248, 0.2); }
-        .edit-btn:hover { background: rgba(56, 189, 248, 0.8); color: #fff; transform: scale(1.1); }
-        .delete-btn { background: rgba(239, 68, 68, 0.2); }
-        .delete-btn:hover { background: rgba(239, 68, 68, 0.8); color: #fff; transform: scale(1.1); }
+        .card-info { padding: 25px; flex-grow: 1; display: flex; flex-direction: column; gap: 12px; }
+        .card-info h3 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px; }
+        .card-info p { font-size: 1rem; color: var(--text-muted); line-height: 1.6; }
+        .card-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 20px; }
+        .card-tags span { font-size: 0.8rem; font-weight: 600; padding: 6px 14px; border-radius: 50px; background: rgba(128,128,128,0.06); border: 1px solid var(--glass-border); color: var(--text-main); }
 
-        .card-header { padding: 12px 16px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--glass-border); background: rgba(128,128,128,0.05); }
-        .dot { width: 10px; height: 10px; border-radius: 50%; background: #94a3b8; transition: 0.3s; }
-        .card:hover .dot:nth-child(1) { background: #ef4444; } .card:hover .dot:nth-child(2) { background: #f59e0b; } .card:hover .dot:nth-child(3) { background: #10b981; }
-
-        .card-preview { position: relative; width: 100%; aspect-ratio: 16/9; background: rgba(128,128,128,0.1); overflow: hidden; display: flex; align-items: center; justify-content: center; }
-        .card-preview img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease; }
-        .card:hover .card-preview img { transform: scale(1.04); }
-        .card-preview::before { content: "Loading preview..."; position: absolute; color: var(--text-muted); font-size: 0.85rem; z-index: 0; }
-
-        .card-info { padding: 25px; flex-grow: 1; display: flex; flex-direction: column; gap: 10px; }
-        .card-info h3 { font-size: 1.3rem; font-weight: 700; letter-spacing: -0.3px; }
-        .card-info p { font-size: 0.95rem; color: var(--text-muted); line-height: 1.6; }
-        .card-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 15px; }
-        .card-tags span { font-size: 0.75rem; font-weight: 600; padding: 5px 12px; border-radius: 50px; background: rgba(128,128,128,0.05); border: 1px solid var(--glass-border); color: var(--text-muted); }
-
-        /* NÚT THÊM & ĐĂNG XUẤT CHO ADMIN */
-        #add-btn { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; border-radius: 50%; font-size: 1.6rem; cursor: pointer; justify-content: center; align-items: center; z-index: 1000; transition: 0.3s; display: none; }
-        #add-btn:hover { transform: scale(1.1) rotate(90deg); background: var(--text-main); color: var(--bg-base); }
+        /* CONTACT SECTION */
+        .contact-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-top: 30px; }
+        .contact-card { 
+            position: relative; display: flex; align-items: center; gap: 20px; padding: 24px; text-decoration: none; 
+            color: var(--text-main); border-radius: 24px; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); 
+            overflow: hidden; background: var(--glass-bg); backdrop-filter: blur(24px); 
+            border: 1px solid var(--glass-border); box-shadow: var(--shadow-soft), var(--glass-inner); 
+        }
+        .contact-card::before { 
+            content: ""; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; 
+            background: linear-gradient(to right, transparent, rgba(255,255,255,0.15), transparent); 
+            transform: skewX(-20deg); transition: 0.6s; z-index: 1; pointer-events: none; 
+        }
+        .contact-card:hover::before { left: 150%; }
+        .contact-card:hover { transform: translateY(-8px); border-color: var(--glass-shine); box-shadow: 0 25px 50px rgba(0,0,0,0.1), var(--glass-inner); background: var(--card-hover); }
         
-        #logout-btn { position: fixed; bottom: 30px; left: 30px; padding: 12px 24px; border-radius: 100px; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); font-weight: 700; cursor: pointer; z-index: 1000; transition: 0.3s; backdrop-filter: blur(10px); display: none; }
+        .contact-icon-box { 
+            width: 64px; height: 64px; border-radius: 20px; display: flex; align-items: center; justify-content: center; 
+            background: var(--bg-base); border: 1px solid var(--glass-border); font-size: 2.2rem; 
+            transition: 0.4s; flex-shrink: 0; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); z-index: 2;
+        }
+        .contact-card:hover .contact-icon-box { transform: scale(1.1) rotate(5deg); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        
+        .cc-info { flex-grow: 1; z-index: 2; }
+        .cc-info h3 { font-size: 1.2rem; font-weight: 800; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; }
+        .cc-info p { color: var(--text-muted); font-size: 0.95rem; font-weight: 500; }
+        
+        .cc-arrow { color: var(--text-muted); transition: 0.4s; font-size: 1.4rem; opacity: 0; transform: translate(-10px, 10px); }
+        .contact-card:hover .cc-arrow { color: var(--text-main); opacity: 1; transform: translate(0, 0); }
+
+        /* ADMIN BUTTONS */
+        .action-group { position: absolute; top: 12px; right: 12px; display: flex; gap: 8px; z-index: 10; }
+        .action-btn { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--glass-border); color: var(--text-main); font-size: 1.1rem; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: 0.3s; backdrop-filter: blur(8px); }
+        .edit-btn { background: rgba(56, 189, 248, 0.2); } .edit-btn:hover { background: #38bdf8; color: #fff; transform: scale(1.1); }
+        .delete-btn { background: rgba(239, 68, 68, 0.2); } .delete-btn:hover { background: #ef4444; color: #fff; transform: scale(1.1); }
+
+        #add-btn { position: fixed; bottom: 30px; right: 30px; width: 64px; height: 64px; border-radius: 50%; font-size: 1.8rem; cursor: pointer; justify-content: center; align-items: center; z-index: 1000; transition: 0.3s; display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        #add-btn:hover { transform: scale(1.1) rotate(90deg); background: var(--text-main); color: var(--bg-base); }
+        #logout-btn { position: fixed; bottom: 30px; left: 30px; padding: 14px 28px; border-radius: 100px; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); font-weight: 700; cursor: pointer; z-index: 1000; transition: 0.3s; backdrop-filter: blur(10px); display: none; }
         #logout-btn:hover { background: #ef4444; color: white; }
 
         /* SWEETALERT HÀI HÒA */
-        .swal2-popup.custom-swal { background: var(--bg-base) !important; color: var(--text-main) !important; border: 1px solid var(--glass-border) !important; border-radius: 24px !important; box-shadow: var(--shadow-soft) !important; transition: background 0.4s ease, color 0.4s ease; }
-        .swal2-title { color: var(--text-main) !important; font-family: 'Plus Jakarta Sans', sans-serif !important; }
+        .swal2-popup.custom-swal { background: var(--bg-base) !important; color: var(--text-main) !important; border: 1px solid var(--glass-border) !important; border-radius: 28px !important; box-shadow: var(--shadow-soft) !important; }
+        .swal2-title { font-family: 'Plus Jakarta Sans', sans-serif !important; font-weight: 800 !important; }
         .swal2-html-container { color: var(--text-muted) !important; }
-        .swal2-input { background: rgba(128,128,128,0.05) !important; color: var(--text-main) !important; border: 1px solid var(--glass-border) !important; border-radius: 12px !important; transition: all 0.3s; }
-        .swal2-input:focus { border-color: var(--accent) !important; box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2) !important; }
-        .swal2-confirm { background: var(--text-main) !important; color: var(--bg-base) !important; border-radius: 100px !important; font-weight: 700 !important; padding: 12px 30px !important; }
-        .swal2-cancel, .swal2-deny { border-radius: 100px !important; background: transparent !important; border: 1px solid var(--glass-border) !important; color: var(--text-main) !important; padding: 12px 30px !important; }
+        .swal2-input, .swal2-textarea { background: rgba(128,128,128,0.05) !important; color: var(--text-main) !important; border: 1px solid var(--glass-border) !important; border-radius: 16px !important; transition: 0.3s; }
+        .swal2-input:focus, .swal2-textarea:focus { border-color: var(--accent) !important; box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2) !important; }
+        .swal2-confirm { background: var(--text-main) !important; color: var(--bg-base) !important; border-radius: 100px !important; font-weight: 700 !important; padding: 14px 32px !important; }
+        .swal2-cancel, .swal2-deny { border-radius: 100px !important; background: transparent !important; border: 1px solid var(--glass-border) !important; color: var(--text-main) !important; padding: 14px 32px !important; font-weight: 600 !important;}
+
+        /* MARQUEE SKILLS */
+        .marquee-wrapper { position: relative; display: flex; flex-direction: column; gap: 16px; margin-top: 40px; overflow: hidden; mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent); -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent); }
+        .marquee-track { display: flex; gap: 16px; width: max-content; animation: scrollLeft 30s linear infinite; }
+        .marquee-track.reverse { animation: scrollRight 35s linear infinite; }
+        .marquee-track:hover { animation-play-state: paused; }
+        .skill-item { display: flex; align-items: center; gap: 10px; padding: 12px 24px; border-radius: 100px; background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--text-main); font-weight: 600; font-size: 1rem; transition: 0.3s; white-space: nowrap; cursor: default; }
+        @keyframes scrollLeft { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        @keyframes scrollRight { 0% { transform: translateX(-50%); } 100% { transform: translateX(0); } }
+
+        /* REVIEWS SECTION & THREADS */
+        .review-input-box { background: var(--glass-bg); padding: 24px; border-radius: 24px; border: 1px solid var(--glass-border); margin-bottom: 30px; display: flex; flex-direction: column; gap: 12px; }
+        .review-input-box input, .review-input-box textarea { width: 100%; background: rgba(128,128,128,0.05); border: 1px solid var(--glass-border); color: var(--text-main); padding: 14px 20px; border-radius: 16px; font-size: 1rem; outline: none; transition: 0.3s; font-family: inherit; }
+        .review-input-box input:focus, .review-input-box textarea:focus { border-color: var(--accent); }
+        .review-input-box textarea { resize: vertical; min-height: 100px; }
+        .review-actions-row { display: flex; justify-content: flex-end; }
+        
+        .review-thread { margin-bottom: 24px; animation: pageIn 0.4s ease forwards; }
+        .review-card { background: var(--glass-bg); padding: 16px 20px; border-radius: 20px; border: 1px solid var(--glass-border); display: flex; flex-direction: column; gap: 10px; transition: 0.3s; }
+        
+        .review-header { display: flex; justify-content: space-between; align-items: center; }
+        .review-author { font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; gap: 6px; }
+        .verified-tick { color: var(--accent); font-size: 1.25rem; display: flex; align-items: center; }
+        .author-tag { background: rgba(14, 165, 233, 0.1); color: var(--accent); font-size: 0.7rem; padding: 2px 8px; border-radius: 50px; text-transform: uppercase; letter-spacing: 1px; border: 1px solid rgba(14, 165, 233, 0.2); }
+        .review-date { font-size: 0.85rem; color: var(--text-muted); }
+        .review-content { font-size: 1rem; line-height: 1.6; color: var(--text-main); word-break: break-word; }
+        .mention { color: var(--accent); font-weight: 700; background: rgba(14, 165, 233, 0.1); padding: 2px 6px; border-radius: 6px; }
+        .review-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; padding-top: 8px; border-top: 1px dashed var(--glass-border); }
+        .review-btn-group { display: flex; gap: 16px; }
+        .rv-btn { background: transparent; border: none; color: var(--text-muted); display: flex; align-items: center; gap: 6px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: 0.3s; }
+        .rv-btn:hover { color: var(--text-main); }
+        .rv-btn.liked { color: #ef4444; }
+        .rv-btn.delete:hover { color: #ef4444; }
+
+        /* Nút Xem bình luận (Nằm ngoài màn hình chính) */
+        .view-replies-btn { background: transparent; border: none; color: var(--text-muted); font-weight: 600; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 8px; margin-top: 12px; margin-left: 20px; cursor: pointer; transition: 0.3s; padding: 6px 14px; border-radius: 100px; background: rgba(128,128,128,0.05); }
+        .view-replies-btn:hover { background: rgba(128,128,128,0.15); color: var(--text-main); }
+
+        /* OVERLAY MODAL CHO LUỒNG BÌNH LUẬN (SUPER GLASS THREAD) */
+        .thread-overlay { 
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); 
+            z-index: 1050; display: flex; align-items: center; justify-content: center; 
+            opacity: 0; visibility: hidden; pointer-events: none; transition: 0.3s ease; 
+        }
+        .thread-overlay.active { 
+            opacity: 1; visibility: visible; pointer-events: auto; 
+        }
+        
+        .thread-modal { 
+            width: 95%; max-width: 650px; max-height: 85vh; 
+            background: var(--modal-bg); 
+            backdrop-filter: blur(48px) saturate(150%); -webkit-backdrop-filter: blur(48px) saturate(150%); 
+            border-radius: 32px; display: flex; flex-direction: column; overflow: hidden; 
+            box-shadow: 0 40px 80px rgba(0,0,0,0.4), inset 0 1px 1px var(--modal-shine), inset 1px 0 1px var(--modal-shine); 
+            border: 1px solid var(--modal-border); 
+            transform: translateY(40px) scale(0.95); transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1); 
+        }
+        .thread-overlay.active .thread-modal { transform: translateY(0) scale(1); }
+        
+        .thread-header { padding: 18px 24px; border-bottom: 1px solid var(--modal-border); background: rgba(255,255,255,0.03); display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: 1.2rem; }
+        .thread-close { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(128,128,128,0.08); cursor: pointer; border: none; color: var(--text-main); transition: 0.3s; font-size: 1.2rem; }
+        .thread-close:hover { background: #ef4444; color: white; transform: rotate(90deg); }
+        
+        .thread-body { padding: 24px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 16px; scroll-behavior: smooth; }
+        
+        /* CUSTOM SCROLLBAR CHO POPUP */
+        .thread-body::-webkit-scrollbar { width: 6px; }
+        .thread-body::-webkit-scrollbar-track { background: transparent; margin: 16px 0; }
+        .thread-body::-webkit-scrollbar-thumb { background: rgba(128, 128, 128, 0.3); border-radius: 10px; }
+        .thread-body::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+        
+        /* CSS CHO KHUNG CHAT TRỰC TIẾP TRONG POPUP SUPER GLASS */
+        .thread-input-area { padding: 16px 24px; border-top: 1px solid var(--modal-border); background: rgba(128,128,128,0.03); display: flex; gap: 12px; align-items: center; backdrop-filter: blur(20px); }
+        .thread-input-area input { flex: 1; background: var(--input-bg); border: 1px solid var(--modal-border); color: var(--text-main); padding: 14px 20px; border-radius: 100px; font-size: 0.95rem; outline: none; transition: 0.3s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); backdrop-filter: blur(10px); }
+        .thread-input-area input:focus { border-color: var(--accent); box-shadow: inset 0 2px 4px rgba(0,0,0,0.02), 0 0 0 3px rgba(14, 165, 233, 0.15); }
+        .thread-input-area button { width: 44px; height: 44px; border-radius: 50%; background: var(--accent); color: #fff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; transition: 0.3s; box-shadow: 0 4px 10px rgba(14, 165, 233, 0.3); flex-shrink: 0; }
+        .thread-input-area button:hover { transform: scale(1.05); }
+
+        /* CSS cho các comment con bên trong Modal */
+        .replies-wrapper { margin-left: 20px; padding-left: 16px; border-left: 2px solid var(--glass-border); display: flex; flex-direction: column; gap: 12px; }
+        .replies-wrapper .review-card { padding: 12px 16px; background: var(--reply-box); border: 1px solid var(--glass-border); box-shadow: none; border-radius: 16px; }
+        .replies-wrapper .review-author { font-size: 1rem; }
 
         @media (max-width: 768px) {
-            .hero { flex-direction: column-reverse; text-align: center; gap: 30px; }
-            .image-container { width: 280px; }
+            .hero { flex-direction: column-reverse; text-align: center; gap: 40px; }
             .hero-text p { margin: 20px auto 30px; }
+            .btn-group { justify-content: center; }
+            .image-container { width: 300px; }
+            nav { width: 90vw; justify-content: space-between; overflow-x: auto; }
+            .nav-btn span { display: none; }
+            .nav-btn { padding: 12px; }
             #logout-btn { padding: 10px 16px; font-size: 0.85rem; bottom: 20px; left: 20px; }
-            #add-btn { bottom: 20px; right: 20px; width: 50px; height: 50px; font-size: 1.4rem; }
+            #add-btn { bottom: 20px; right: 20px; width: 56px; height: 56px; font-size: 1.4rem; }
+            
+            /* Mobile Modal chỉnh để tràn dưới màn hình lên */
+            .thread-modal { max-height: 90vh; border-radius: 28px 28px 0 0; align-self: flex-end; width: 100%; transform: translateY(100%); }
         }
-
-        .edit-avatar-btn {
-    position: absolute; bottom: 20px; right: 20px;
-    background: var(--text-main); color: var(--bg-base);
-    padding: 10px 18px; border-radius: 18px; font-weight: 800;
-    font-size: 0.8rem; cursor: pointer; border: none;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-    display: none; z-index: 10; transition: 0.3s;
-}
-.edit-avatar-btn:hover { transform: scale(1.1); }
     </style>
 </head>
 <body>
@@ -162,9 +299,12 @@
 
     <div class="nav-wrapper">
         <nav class="glass">
-            <button class="nav-btn active" onclick="switchTab('home')">Tổng quan</button>
-            <button class="nav-btn" onclick="switchTab('projects')">Dự án</button>
-            <button class="theme-btn" onclick="toggleTheme()" title="Đổi chủ đề">🌓</button>
+            <button class="nav-btn active" onclick="switchTab('home')" title="Tổng quan"><i class="ph-bold ph-house"></i> <span>Home</span></button>
+            <button class="nav-btn" onclick="switchTab('skills')" title="Kỹ năng"><i class="ph-bold ph-lightning"></i> <span>Skills</span></button>
+            <button class="nav-btn" onclick="switchTab('projects')" title="Dự án"><i class="ph-bold ph-briefcase"></i> <span>Projects</span></button>
+            <button class="nav-btn" onclick="switchTab('reviews')" title="Đánh giá"><i class="ph-bold ph-chats"></i> <span>Reviews</span></button>
+            <button class="nav-btn" onclick="switchTab('contact')" title="Liên hệ"><i class="ph-bold ph-envelope-simple"></i> <span>Contact</span></button>
+            <button class="theme-btn" onclick="toggleTheme()" title="Đổi chủ đề"><i class="ph-fill ph-moon-stars"></i></button>
         </nav>
     </div>
 
@@ -172,37 +312,92 @@
         <section id="home" class="page active">
             <div class="hero">
                 <div class="hero-text">
-                    <span style="font-size: 0.9rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--text-muted); display: block; margin-bottom: 12px;">Web Developer</span>
-                    <h1>Canh<span> VIP:)</span></h1>
-                    <p>Hệ thống tự động hóa Portfolio thế hệ mới. Trải nghiệm nút Thả Tim Realtime siêu mượt cùng bộ lọc dự án thông minh.</p>
-                    <button class="btn-primary" onclick="switchTab('projects')">Xem Hệ Sinh Thái</button>
+                    <div class="badge" id="pf-role">Web Developer</div>
+                    <h1><span id="pf-name" style="color: inherit; background: none; -webkit-text-fill-color: currentcolor;">Canh</span><span id="pf-highlight"> VIP:)</span></h1>
+                    <p id="pf-bio">Hệ thống tự động hóa Portfolio thế hệ mới. Trải nghiệm nút Thả Tim Realtime siêu mượt cùng bộ lọc dự án thông minh.</p>
+                    <div class="btn-group">
+                        <button class="btn-primary" onclick="switchTab('projects')"><i class="ph-bold ph-rocket-launch"></i> Xem Dự Án</button>
+                        <button class="btn-primary" style="background: transparent; color: var(--text-main); border: 1px solid var(--glass-border);" onclick="switchTab('contact')">Liên hệ ngay</button>
+                        <button id="btn-edit-info" class="btn-primary" style="background: rgba(56, 189, 248, 0.1); color: var(--accent); border: 1px solid rgba(56, 189, 248, 0.2); display: none;" onclick="editProfileInfo()"><i class="ph-bold ph-pencil-simple"></i> Sửa Profile</button>
+                    </div>
                 </div>
                 <div class="image-container glass">
-                    <img id="admin-avatar" src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=600&auto=format&fit=crop" alt="Hoàng Nhật">
-                    
-                    <button id="btn-change-avatar" class="edit-avatar-btn" onclick="changeAvatar()">Thay ảnh 📸</button>
+                    <img id="admin-avatar" src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=600&auto=format&fit=crop" alt="Avatar">
                 </div>
             </div>
+        </section>
+
+        <section id="skills" class="page">
+            <div class="section-header">
+                <h2>Bộ Kỹ Năng <span>Chuyên Môn</span></h2>
+                <p>Hơn 50+ công nghệ, ngôn ngữ và nền tảng mà mình sử dụng để tạo ra các sản phẩm chất lượng.</p>
+            </div>
+            <div class="marquee-wrapper" id="skills-marquee">
+                </div>
         </section>
 
         <section id="projects" class="page">
             <div class="section-header">
                 <h2>Danh sách <span>Dự án</span></h2>
-                <p>Thả tim để ủng hộ tác giả. Tự động cập nhật thời gian thực!</p>
+                <p>Thả tim để ủng hộ tác giả. Tự động cập nhật thời gian thực không cần tải lại trang!</p>
             </div>
-            
             <div id="tag-filters" class="filter-container"></div>
             <div id="dynamic-gallery" class="grid"></div>
         </section>
+
+        <section id="reviews" class="page">
+            <div class="section-header">
+                <h2>Cộng đồng <span>Đánh giá</span></h2>
+                <p>Nơi mọi người có thể để lại lời nhắn, góp ý hoặc hỏi đáp công khai. Bạn có thể tự do xóa lời nhắn của chính mình.</p>
+            </div>
+            
+            <div class="review-input-box">
+                <input type="text" id="rv-name" placeholder="Tên của bạn (VD: Khách 007)" maxlength="30">
+                <textarea id="rv-content" placeholder="Để lại lời nhắn hoặc đánh giá của bạn vào đây..."></textarea>
+                <div class="review-actions-row">
+                    <button class="btn-primary" onclick="submitReview()"><i class="ph-bold ph-paper-plane-tilt"></i> Gửi bình luận</button>
+                </div>
+            </div>
+
+            <div id="reviews-gallery">
+                <p style="text-align:center; color:var(--text-muted)">Đang tải bình luận...</p>
+            </div>
+        </section>
+
+        <section id="contact" class="page">
+            <div class="section-header" style="display: flex; flex-direction: column; align-items: flex-start;">
+                <h2>Kết Nối & <span>Liên Hệ</span></h2>
+                <p>Theo dõi và kết nối với mình qua các nền tảng dưới đây nhé.</p>
+                <button id="btn-edit-social" class="btn-primary" style="margin-top: 16px; padding: 10px 24px; font-size: 0.9rem; background: rgba(56, 189, 248, 0.1); color: var(--accent); border: 1px solid rgba(56, 189, 248, 0.2); display: none;" onclick="editSocials()"><i class="ph-bold ph-link"></i> Cập nhật Link Liên Hệ</button>
+            </div>
+            <div class="contact-grid" id="dynamic-socials">
+                </div>
+        </section>
     </main>
 
-    <div id="add-btn" class="glass" title="Thêm dự án">➕</div>
+    <div id="add-btn" class="glass" title="Thêm dự án"><i class="ph-bold ph-plus"></i></div>
     <button id="logout-btn" title="Thoát quyền Admin" onclick="logoutAdmin()">Đăng xuất Admin</button>
+
+    <div id="thread-overlay" class="thread-overlay" onclick="if(event.target === this) closeThread()">
+        <div class="thread-modal">
+            <div class="thread-header">
+                <span>Luồng bình luận</span>
+                <button class="thread-close" onclick="closeThread()"><i class="ph-bold ph-x"></i></button>
+            </div>
+            
+            <div id="thread-content-body" class="thread-body">
+            </div>
+
+            <div class="thread-input-area">
+                <input type="text" id="thread-reply-input" placeholder="Viết câu trả lời...">
+                <button onclick="submitThreadReply()"><i class="ph-fill ph-paper-plane-tilt"></i></button>
+            </div>
+        </div>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-        // THÊM: increment, onSnapshot để làm tính năng Realtime Likes
-        import { getFirestore, collection, getDocs, getDoc, setDoc, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, increment, onSnapshot } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, increment, onSnapshot } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 
         const firebaseConfig = {
@@ -223,337 +418,454 @@
         window.projectsData = [];
         window.currentFilter = 'Tất cả';
         let isAdmin = false;
+        
+        window.currentReviews = []; 
 
-        // AUTHENTICATION
+        let guestId = localStorage.getItem('guestId');
+        if (!guestId) {
+            guestId = 'guest_' + Math.random().toString(36).substr(2, 10);
+            localStorage.setItem('guestId', guestId);
+        }
+
+        const allSkills = [
+            {n: "HTML5", c: "#E34F26"}, {n: "CSS3", c: "#1572B6"}, {n: "JavaScript", c: "#F7DF1E"}, {n: "TypeScript", c: "#3178C6"}, {n: "React", c: "#61DAFB"},
+            {n: "Next.js", c: "#000000"}, {n: "Vue.js", c: "#4FC08D"}, {n: "Nuxt", c: "#00DC82"}, {n: "Angular", c: "#DD0031"}, {n: "Svelte", c: "#FF3E00"},
+            {n: "Node.js", c: "#339933"}, {n: "Express", c: "#000000"}, {n: "NestJS", c: "#E0234E"}, {n: "Python", c: "#3776AB"}, {n: "Django", c: "#092E20"},
+            {n: "Flask", c: "#000000"}, {n: "Java", c: "#007396"}, {n: "Spring Boot", c: "#6DB33F"}, {n: "C#", c: "#239120"}, {n: ".NET", c: "#512BD4"},
+            {n: "PHP", c: "#777BB4"}, {n: "Laravel", c: "#FF2D20"}, {n: "Ruby", c: "#CC342D"}, {n: "Rails", c: "#CC0000"}, {n: "Go", c: "#00ADD8"},
+            {n: "Rust", c: "#000000"}, {n: "C++", c: "#00599C"}, {n: "Swift", c: "#F05138"}, {n: "Kotlin", c: "#7F52FF"}, {n: "Dart", c: "#0175C2"},
+            {n: "Flutter", c: "#02569B"}, {n: "React Native", c: "#61DAFB"}, {n: "MongoDB", c: "#47A248"}, {n: "PostgreSQL", c: "#4169E1"}, {n: "MySQL", c: "#4479A1"},
+            {n: "Redis", c: "#DC382D"}, {n: "Firebase", c: "#FFCA28"}, {n: "Supabase", c: "#3ECF8E"}, {n: "Docker", c: "#2496ED"}, {n: "Kubernetes", c: "#326CE5"},
+            {n: "AWS", c: "#FF9900"}, {n: "GCP", c: "#4285F4"}, {n: "Azure", c: "#0089D6"}, {n: "Vercel", c: "#000000"}, {n: "Netlify", c: "#00C7B7"},
+            {n: "Git", c: "#F05032"}, {n: "GitHub", c: "#181717"}, {n: "GitLab", c: "#FCA121"}, {n: "Figma", c: "#F24E1E"}, {n: "Tailwind CSS", c: "#06B6D4"},
+            {n: "Sass", c: "#CC6699"}, {n: "GraphQL", c: "#E10098"}, {n: "REST API", c: "#005C84"}, {n: "Webpack", c: "#8DD6F9"}, {n: "Vite", c: "#646CFF"}
+        ];
+
+        function renderSkills() {
+            const container = document.getElementById('skills-marquee');
+            if(!container) return;
+            const rows = [ allSkills.slice(0, 18), allSkills.slice(18, 36), allSkills.slice(36) ];
+            container.innerHTML = '';
+            rows.forEach((row, idx) => {
+                const track = document.createElement('div');
+                track.className = `marquee-track ${idx % 2 !== 0 ? 'reverse' : ''}`;
+                const duplicated = [...row, ...row];
+                let html = '';
+                duplicated.forEach(s => {
+                    html += `<div class="skill-item glass" onmouseenter="this.style.borderColor='${s.c}'; this.style.color='${s.c}'; this.style.boxShadow='0 0 15px ${s.c}40'" onmouseleave="this.style.borderColor='var(--glass-border)'; this.style.color='var(--text-main)'; this.style.boxShadow='var(--shadow-soft)'">
+                                <span style="color:${s.c}; font-size: 1.2rem;">●</span> ${s.n}
+                             </div>`;
+                });
+                track.innerHTML = html;
+                container.appendChild(track);
+            });
+        }
+        renderSkills();
+
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 isAdmin = true;
                 document.getElementById('add-btn').style.display = 'flex';
                 document.getElementById('logout-btn').style.display = 'block';
+                if(document.getElementById('btn-edit-info')) document.getElementById('btn-edit-info').style.display = 'inline-flex';
+                if(document.getElementById('btn-edit-social')) document.getElementById('btn-edit-social').style.display = 'inline-flex';
             } else {
                 isAdmin = false;
                 document.getElementById('add-btn').style.display = 'none';
                 document.getElementById('logout-btn').style.display = 'none';
+                if(document.getElementById('btn-edit-info')) document.getElementById('btn-edit-info').style.display = 'none';
+                if(document.getElementById('btn-edit-social')) document.getElementById('btn-edit-social').style.display = 'none';
                 showWelcomePopup(); 
             }
-            initRealtime(); // Kích hoạt bộ máy Realtime
-            // Thêm dòng này vào cuối hàm
-    if(document.getElementById('btn-change-avatar')) {
-        document.getElementById('btn-change-avatar').style.display = isAdmin ? 'block' : 'none';
-    }
-    initAvatarRealtime(); // Kích hoạt lắng nghe ảnh mới
+            initRealtime();
+            initProfileRealtime();
+            initReviewsRealtime();
         });
 
-        // Hàm thay đổi ảnh đại diện
-window.changeAvatar = async () => {
-    if (!isAdmin) return;
-    const { value: url } = await Swal.fire({
-        title: 'Thay đổi Avatar Admin',
-        input: 'url',
-        inputPlaceholder: 'Dán Link ảnh mới vào đây...',
-        showCancelButton: true,
-        confirmButtonText: 'Cập nhật',
-        customClass: { popup: 'custom-swal' }
-    });
-    if (url) {
-        try {
-            await setDoc(doc(db, "settings", "profile"), { avatarUrl: url }, { merge: true });
-            Swal.fire({ icon: 'success', title: 'Đã lưu!', timer: 1500, showConfirmButton: false });
-        } catch (e) { console.error(e); }
-    }
-};
+        const defaultProfile = {
+            role: "Web Developer", name: "Canh", highlight: " VIP:)", bio: "Hệ thống tự động hóa Portfolio thế hệ mới. Trải nghiệm nút Thả Tim Realtime siêu mượt cùng bộ lọc dự án thông minh.", avatarUrl: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=600&auto=format&fit=crop",
+            email: "emailcuaban@gmail.com", facebook: "https://facebook.com", github: "https://github.com", linkedin: "", youtube: "", tiktok: "", instagram: "", telegram: ""
+        };
+        let currentProfile = {...defaultProfile};
 
-// Hàm lắng nghe ảnh thay đổi Realtime
-function initAvatarRealtime() {
-    onSnapshot(doc(db, "settings", "profile"), (d) => {
-        if (d.exists() && d.data().avatarUrl) {
-            document.getElementById('admin-avatar').src = d.data().avatarUrl;
-        }
-    });
-}
-
-        // POPUP PHÂN LUỒNG
-        async function showWelcomePopup() {
-            const { isDenied } = await Swal.fire({
-                title: 'Chào mừng bạn!',
-                text: 'Bạn muốn truy cập Portfolio với tư cách nào?',
-                showCancelButton: true, showDenyButton: true, showConfirmButton: false, 
-                cancelButtonText: 'Khách (Chỉ xem)', denyButtonText: 'Admin (Quản lý)',
-                allowOutsideClick: false, allowEscapeKey: false, customClass: { popup: 'custom-swal' }
+        function initProfileRealtime() {
+            onSnapshot(doc(db, "settings", "profile"), (d) => {
+                if (d.exists()) currentProfile = { ...defaultProfile, ...d.data() };
+                if(document.getElementById('pf-role')) document.getElementById('pf-role').innerText = currentProfile.role;
+                if(document.getElementById('pf-name')) document.getElementById('pf-name').innerText = currentProfile.name;
+                if(document.getElementById('pf-highlight')) document.getElementById('pf-highlight').innerText = currentProfile.highlight;
+                if(document.getElementById('pf-bio')) document.getElementById('pf-bio').innerText = currentProfile.bio;
+                if(document.getElementById('admin-avatar')) document.getElementById('admin-avatar').src = currentProfile.avatarUrl;
+                renderSocials();
             });
+        }
+
+        const socialConfig = [
+            { id: 'email', name: 'Email', desc: 'Nhắn tin trực tiếp', icon: 'ph-envelope-simple', color: '#ea4335', prefix: 'mailto:' },
+            { id: 'facebook', name: 'Facebook', desc: 'Theo dõi cuộc sống', icon: 'ph-facebook-logo', color: '#1877f2', prefix: '' },
+            { id: 'github', name: 'GitHub', desc: 'Xem mã nguồn mở', icon: 'ph-github-logo', color: 'var(--text-main)', prefix: '' },
+            { id: 'linkedin', name: 'LinkedIn', desc: 'Hồ sơ công việc', icon: 'ph-linkedin-logo', color: '#0a66c2', prefix: '' },
+            { id: 'youtube', name: 'YouTube', desc: 'Video chia sẻ', icon: 'ph-youtube-logo', color: '#ff0000', prefix: '' },
+            { id: 'tiktok', name: 'TikTok', desc: 'Video giải trí', icon: 'ph-tiktok-logo', color: '#ff0050', prefix: '' },
+            { id: 'instagram', name: 'Instagram', desc: 'Hình ảnh cá nhân', icon: 'ph-instagram-logo', color: '#e1306c', prefix: '' },
+            { id: 'telegram', name: 'Telegram', desc: 'Chat nhanh', icon: 'ph-telegram-logo', color: '#0088cc', prefix: '' }
+        ];
+
+        function renderSocials() {
+            const container = document.getElementById('dynamic-socials');
+            if(!container) return;
+            container.innerHTML = '';
+            socialConfig.forEach(s => {
+                const linkVal = currentProfile[s.id];
+                if (linkVal && linkVal.trim() !== '') {
+                    const href = s.prefix && !linkVal.startsWith(s.prefix) ? s.prefix + linkVal : linkVal;
+                    container.innerHTML += `
+                        <a href="${href}" target="_blank" class="contact-card">
+                            <div class="contact-icon-box">
+                                <i class="ph-fill ${s.icon}" style="color: ${s.color};"></i>
+                            </div>
+                            <div class="cc-info">
+                                <h3>${s.name} <i class="ph-bold ph-arrow-up-right cc-arrow"></i></h3>
+                                <p>${s.desc}</p>
+                            </div>
+                        </a>
+                    `;
+                }
+            });
+            if (container.innerHTML === '') container.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted);">Chưa có thông tin liên hệ nào được cập nhật.</p>';
+        }
+
+        window.editProfileInfo = async () => { 
+            if (!isAdmin) return;
+            const { value: f } = await Swal.fire({
+                title: 'Sửa Thông Tin Cá Nhân',
+                html: `<input id="sw-r" class="swal2-input" placeholder="Chức danh" value="${currentProfile.role}"><input id="sw-n" class="swal2-input" placeholder="Tên" value="${currentProfile.name}"><input id="sw-h" class="swal2-input" placeholder="Chữ nổi" value="${currentProfile.highlight}"><textarea id="sw-b" class="swal2-input" placeholder="Mô tả" style="height: 100px;">${currentProfile.bio}</textarea><input id="sw-a" class="swal2-input" placeholder="Link Ảnh" value="${currentProfile.avatarUrl}">`,
+                preConfirm: () => ({ role: document.getElementById('sw-r').value, name: document.getElementById('sw-n').value, highlight: document.getElementById('sw-h').value, bio: document.getElementById('sw-b').value, avatarUrl: document.getElementById('sw-a').value }),
+                showCancelButton: true, confirmButtonText: 'Lưu', customClass: { popup: 'custom-swal' }
+            });
+            if (f) updateDoc(doc(db, "settings", "profile"), f);
+        };
+
+        window.editSocials = async () => { 
+            if (!isAdmin) return;
+            const inputsHTML = socialConfig.map(s => `<div style="display:flex; gap:10px; margin-bottom:12px;"><i class="ph-fill ${s.icon}" style="font-size: 1.6rem; color:${s.color};"></i><input id="sw-${s.id}" class="swal2-input" style="margin:0; flex:1;" value="${currentProfile[s.id] || ''}"></div>`).join('');
+            const { value: f } = await Swal.fire({
+                title: 'Quản lý Liên Hệ', html: `<div style="text-align:left; margin-top:15px; max-height:50vh; overflow-y:auto;">${inputsHTML}</div>`,
+                preConfirm: () => { const res = {}; socialConfig.forEach(s => res[s.id] = document.getElementById(`sw-${s.id}`).value.trim()); return res; },
+                showCancelButton: true, confirmButtonText: 'Lưu', customClass: { popup: 'custom-swal' }
+            });
+            if (f) updateDoc(doc(db, "settings", "profile"), f);
+        };
+
+        async function showWelcomePopup() {
+            const { isDenied } = await Swal.fire({ title: 'Xin chào! 👋', text: 'Chào mừng bạn đến với Portfolio.', showCancelButton: true, showDenyButton: true, showConfirmButton: false, cancelButtonText: 'Khách', denyButtonText: 'Admin', customClass: { popup: 'custom-swal' }});
             if (isDenied) showLoginPopup();
-            else Swal.fire({ icon: 'info', title: 'Chế độ Khách', text: 'Bạn có thể xem và thả tim cho các dự án!', timer: 2000, showConfirmButton: false, customClass: { popup: 'custom-swal' } });
         }
 
         async function showLoginPopup() {
-            const { value: formValues } = await Swal.fire({
-                title: 'Đăng nhập Admin',
-                html: `<input id="sw-email" type="email" class="swal2-input" placeholder="Email"><input id="sw-pass" type="password" class="swal2-input" placeholder="Mật khẩu">`,
-                focusConfirm: false, showCancelButton: true, confirmButtonText: 'Xác nhận', cancelButtonText: 'Quay lại', customClass: { popup: 'custom-swal' },
-                preConfirm: () => ({ e: document.getElementById('sw-email').value, p: document.getElementById('sw-pass').value })
-            });
+            const { value: formValues } = await Swal.fire({ title: 'Đăng nhập Admin', html: `<input id="sw-email" type="email" class="swal2-input" placeholder="Email"><input id="sw-pass" type="password" class="swal2-input" placeholder="Mật khẩu">`, focusConfirm: false, showCancelButton: true, confirmButtonText: 'Xác nhận', customClass: { popup: 'custom-swal' }, preConfirm: () => ({ e: document.getElementById('sw-email').value, p: document.getElementById('sw-pass').value }) });
             if (formValues && formValues.e && formValues.p) {
-                Swal.fire({ title: 'Đang xác thực...', didOpen: () => Swal.showLoading(), customClass: { popup: 'custom-swal' } });
-                try {
-                    await signInWithEmailAndPassword(auth, formValues.e, formValues.p);
-                    Swal.fire({ icon: 'success', title: 'Quyền lực mở ra!', text: 'Đăng nhập Admin thành công.', timer: 1500, showConfirmButton: false, customClass: { popup: 'custom-swal' } });
-                } catch (error) { Swal.fire({ icon: 'error', title: 'Lỗi', text: 'Sai Email hoặc Mật khẩu.', customClass: { popup: 'custom-swal' } }).then(() => showLoginPopup()); }
-            } else if (!formValues) showWelcomePopup();
+                try { await signInWithEmailAndPassword(auth, formValues.e, formValues.p); Swal.fire({ icon: 'success', title: 'Thành công', timer: 1500, showConfirmButton: false, customClass: {popup: 'custom-swal'} });
+                } catch (error) { Swal.fire({ icon: 'error', title: 'Lỗi', text: 'Sai thông tin.', customClass: {popup: 'custom-swal'}}).then(() => showLoginPopup()); }
+            }
         }
+        window.logoutAdmin = async () => { await signOut(auth); Swal.fire({ icon: 'success', title: 'Đã Đăng xuất', timer: 1000, showConfirmButton: false, customClass: {popup: 'custom-swal'} }); }
 
-        window.logoutAdmin = async () => {
-            await signOut(auth);
-            Swal.fire({ icon: 'success', title: 'Đã Đăng xuất', timer: 1000, showConfirmButton: false, customClass: { popup: 'custom-swal' } });
-        }
-
-        // ===================================
-        // BỘ MÁY REALTIME: TỰ ĐỘNG CẬP NHẬT KHI CÓ SỰ THAY ĐỔI
-        // ===================================
+        // MẢNG DỰ ÁN 
         let isFirstLoad = true;
         function initRealtime() {
             onSnapshot(collection(db, "projects"), (snapshot) => {
                 if (isFirstLoad) gallery.innerHTML = '<p style="text-align:center; width:100%; color:var(--text-muted)">Đang quét dữ liệu...</p>';
-                
-                // Lưu lại Data mới
                 window.projectsData = [];
                 snapshot.docs.forEach(doc => window.projectsData.push({ id: doc.id, ...doc.data() }));
                 window.projectsData.sort((a,b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
-
-                if (isFirstLoad) {
-                    isFirstLoad = false;
-                    updateTagsAndRender();
-                } else {
-                    let needsFullRender = false;
-                    snapshot.docChanges().forEach((change) => {
-                        // Nếu có dự án mới thêm hoặc xóa thì render lại cả bảng
-                        if (change.type === "added" || change.type === "removed") {
-                            needsFullRender = true;
-                        } 
-                        // CHỈNH SỬA LIKE: Chỉ chớp số thay vì render cả bảng (Cực mượt)
-                        else if (change.type === "modified") {
-                            const countSpan = document.getElementById(`like-count-${change.doc.id}`);
-                            if (countSpan) {
-                                const newLikes = change.doc.data().likes || 0;
-                                if (parseInt(countSpan.innerText) !== newLikes) {
-                                    countSpan.innerText = newLikes;
-                                    countSpan.classList.add('pop'); // Hiệu ứng nhảy số
-                                    setTimeout(() => countSpan.classList.remove('pop'), 300);
-                                }
-                            } else {
-                                // Nếu Admin sửa Nội dung/Tiêu đề, render lại toàn bộ
-                                needsFullRender = true;
-                            }
-                        }
-                    });
-                    if (needsFullRender) updateTagsAndRender();
-                }
+                updateTagsAndRender();
+                isFirstLoad = false;
             });
         }
-
-        function updateTagsAndRender() {
-            if (window.projectsData.length === 0) {
-                gallery.innerHTML = '<p style="text-align:center; width:100%; color:var(--text-muted)">Chưa có dữ liệu dự án.</p>';
-                filterArea.innerHTML = '';
-                return;
-            }
-
+        function updateTagsAndRender() { 
+            if (window.projectsData.length === 0) { gallery.innerHTML = '<p style="text-align:center; width:100%; color:var(--text-muted)">Chưa có dữ liệu dự án.</p>'; filterArea.innerHTML = ''; return; }
             const tagsSet = new Set(['Tất cả']);
             window.projectsData.forEach(p => { if(p.tags) p.tags.forEach(t => tagsSet.add(t)); });
-            
             filterArea.innerHTML = '';
             tagsSet.forEach(tag => {
-                const btn = document.createElement('div');
-                btn.className = `filter-chip ${tag === window.currentFilter ? 'active' : ''}`;
-                btn.innerText = tag;
-                btn.onclick = () => filterProjects(tag, btn);
-                filterArea.appendChild(btn);
+                const btn = document.createElement('div'); btn.className = `filter-chip ${tag === window.currentFilter ? 'active' : ''}`;
+                btn.innerText = tag; btn.onclick = () => filterProjects(tag, btn); filterArea.appendChild(btn);
             });
-
             if(!tagsSet.has(window.currentFilter)) window.currentFilter = 'Tất cả';
             filterProjects(window.currentFilter);
         }
-
         window.filterProjects = (tag, element) => {
-            window.currentFilter = tag;
-            document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-            if(element) element.classList.add('active');
-            else document.querySelectorAll('.filter-chip').forEach(c => { if (c.innerText === tag) c.classList.add('active'); });
-
+            window.currentFilter = tag; document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+            if(element) element.classList.add('active'); else document.querySelectorAll('.filter-chip').forEach(c => { if (c.innerText === tag) c.classList.add('active'); });
             const filteredData = tag === 'Tất cả' ? window.projectsData : window.projectsData.filter(p => p.tags && p.tags.includes(tag));
             renderProjects(filteredData);
         }
-
-        // HÀM RENDER HTML CỦA THẺ DỰ ÁN
         function renderProjects(data) {
             gallery.innerHTML = '';
-            if (data.length === 0) {
-                gallery.innerHTML = '<p style="text-align:center; width:100%; color:var(--text-muted)">Không tìm thấy dự án.</p>'; return;
-            }
-
+            if (data.length === 0) { gallery.innerHTML = '<p style="text-align:center; width:100%; color:var(--text-muted)">Không tìm thấy dự án.</p>'; return; }
             data.forEach(item => {
                 const screenshotUrl = item.link && item.link.startsWith('http') ? `https://s.wordpress.com/mshots/v1/${encodeURIComponent(item.link)}?w=800` : `https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=800`;
                 const tags = item.tags ? item.tags.map(t => `<span>${t}</span>`).join('') : '';
                 const domainName = item.link ? item.link.replace(/^https?:\/\//, '').split('/')[0] : 'localhost';
-                
-                // LOGIC NÚT LIKE
                 const isLiked = localStorage.getItem('liked_' + item.id) === 'true';
-                const heartColor = isLiked ? '#ef4444' : 'none';
-                const strokeColor = isLiked ? '#ef4444' : 'currentColor';
-                const likeClass = isLiked ? 'liked' : '';
-                const likesCount = item.likes || 0;
-
-                const actionButtonsHTML = isAdmin ? `
-                    <div class="action-group">
-                        <button onclick="editProject('${item.id}')" class="action-btn edit-btn" title="Sửa bài">✏️</button>
-                        <button onclick="deleteProject('${item.id}')" class="action-btn delete-btn" title="Xóa bài">🗑️</button>
-                    </div>` : '';
+                const likeClass = isLiked ? 'liked ph-fill' : 'ph-bold';
+                const actionButtonsHTML = isAdmin ? `<div class="action-group"><button onclick="editProject('${item.id}')" class="action-btn edit-btn" title="Sửa"><i class="ph-bold ph-pencil-simple"></i></button><button onclick="deleteProject('${item.id}')" class="action-btn delete-btn" title="Xóa"><i class="ph-bold ph-trash"></i></button></div>` : '';
 
                 const card = `
-                    <div class="card-wrapper">
-                        ${actionButtonsHTML}
+                    <div class="card-wrapper">${actionButtonsHTML}
                         <a href="${item.link || '#'}" target="_blank" class="glass card">
-                            <div class="card-header">
-                                <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-                                <div style="font-size:0.75rem; color:var(--text-muted); margin-left:8px; font-weight:500;">${domainName}</div>
-                            </div>
-                            <div class="card-preview">
-                                <img src="${screenshotUrl}" alt="${item.title}" loading="lazy">
-                                <!-- NÚT LIKE TRÊN ẢNH -->
-                                <div class="like-btn" onclick="toggleLike(event, '${item.id}')">
-                                    <svg viewBox="0 0 24 24" stroke="${strokeColor}" fill="${heartColor}" class="heart-icon ${likeClass}">
-                                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                                    </svg>
-                                    <span id="like-count-${item.id}">${likesCount}</span>
-                                </div>
-                            </div>
-                            <div class="card-info">
-                                <h3>${item.title}</h3>
-                                <p>${item.desc}</p>
-                                <div class="card-tags">${tags}</div>
-                            </div>
+                            <div class="card-header"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div style="font-size:0.8rem; color:var(--text-muted); margin-left:8px; font-weight:600;"><i class="ph-bold ph-lock-key"></i> ${domainName}</div></div>
+                            <div class="card-preview"><img src="${screenshotUrl}" alt="${item.title}" loading="lazy"><div class="like-btn" onclick="toggleLike(event, '${item.id}')"><i class="heart-icon ph-heart ${likeClass}"></i><span id="like-count-${item.id}">${item.likes || 0}</span></div></div>
+                            <div class="card-info"><h3>${item.title}</h3><p>${item.desc}</p><div class="card-tags">${tags}</div></div>
                         </a>
-                    </div>
-                `;
+                    </div>`;
                 gallery.innerHTML += card;
             });
         }
-
-        // ===================================
-        // XỬ LÝ SỰ KIỆN CLICK VÀO NÚT LIKE
-        // ===================================
         window.toggleLike = async (event, id) => {
-            event.preventDefault();     // Chặn không cho mở link web
-            event.stopPropagation();    // Chặn sự kiện click thẻ card
-
-            const btn = event.currentTarget;
-            const icon = btn.querySelector('.heart-icon');
-            const countSpan = document.getElementById(`like-count-${id}`);
-            const isLiked = localStorage.getItem('liked_' + id) === 'true';
-            const docRef = doc(db, "projects", id);
-
+            event.preventDefault(); event.stopPropagation();
+            const btn = event.currentTarget; const icon = btn.querySelector('.heart-icon'); const countSpan = document.getElementById(`like-count-${id}`);
+            const isLiked = localStorage.getItem('liked_' + id) === 'true'; const docRef = doc(db, "projects", id);
             let currentLikes = parseInt(countSpan.innerText) || 0;
+            icon.classList.add('pop'); setTimeout(() => icon.classList.remove('pop'), 300);
+            if (isLiked) { localStorage.removeItem('liked_' + id); icon.classList.remove('liked', 'ph-fill'); icon.classList.add('ph-bold'); countSpan.innerText = Math.max(0, currentLikes - 1); await updateDoc(docRef, { likes: increment(-1) }); } 
+            else { localStorage.setItem('liked_' + id, 'true'); icon.classList.add('liked', 'ph-fill'); icon.classList.remove('ph-bold'); countSpan.innerText = currentLikes + 1; await updateDoc(docRef, { likes: increment(1) }); }
+        }
 
-            // Kích hoạt hiệu ứng Pop nhỏ cho Icon
-            icon.classList.add('pop');
-            setTimeout(() => icon.classList.remove('pop'), 300);
+        // ==========================================
+        // MẢNG ĐÁNH GIÁ (REVIEWS) - DẠNG POPUP CHAT
+        // ==========================================
+        window.currentReviews = [];
+        window.activeThreadId = null;
+
+        function initReviewsRealtime() {
+            onSnapshot(collection(db, "reviews"), (snapshot) => {
+                let reviews = [];
+                snapshot.docs.forEach(doc => reviews.push({ id: doc.id, ...doc.data() }));
+                window.currentReviews = reviews;
+                renderMainReviews(reviews);
+                
+                // Nếu đang mở Popup Thread thì render lại dữ liệu mới nhất
+                if (window.activeThreadId) {
+                    const parentExists = reviews.find(r => r.id === window.activeThreadId);
+                    if (!parentExists) closeThread(); 
+                    else openThread(window.activeThreadId, null, false); // Cập nhật mà không cần focus
+                }
+            });
+        }
+
+        function buildReviewCardHtml(rv, isReplyInsideModal) {
+            const dateStr = rv.createdAt ? new Date(rv.createdAt.toMillis()).toLocaleString('vi-VN') : 'Vừa xong';
+            const isMyReview = rv.guestId === guestId || isAdmin;
+            let formattedContent = rv.content.replace(/@([^:]+):/g, '<span class="mention">@$1:</span>');
+
+            const rvIsLiked = localStorage.getItem('rv_liked_' + rv.id) === 'true';
+            const rvLikeClass = rvIsLiked ? 'liked ph-fill' : 'ph-bold';
+            const deleteBtn = isMyReview ? `<button class="rv-btn delete" onclick="deleteReview('${rv.id}')"><i class="ph-bold ph-trash"></i> Xóa</button>` : '';
+            const authorBadge = rv.isAdmin ? '<i class="ph-fill ph-seal-check verified-tick" title="Đã xác minh"></i><span class="author-tag">Tác giả</span>' : '';
+
+            // ID gốc dùng để tạo đường dẫn khi bấm "Trả lời"
+            const parentIdForReply = isReplyInsideModal ? rv.parentId : rv.id;
+
+            return `
+                <div class="review-card">
+                    <div class="review-header">
+                        <div class="review-author">${rv.author} ${authorBadge}</div>
+                        <div class="review-date">${dateStr}</div>
+                    </div>
+                    <div class="review-content">${formattedContent}</div>
+                    <div class="review-footer">
+                        <div class="review-btn-group">
+                            <button class="rv-btn" onclick="toggleRvLike(this, '${rv.id}')">
+                                <i class="ph-heart ${rvLikeClass}"></i> <span class="rv-like-cnt">${rv.likes || 0}</span>
+                            </button>
+                            <button class="rv-btn" onclick="replyTo('${parentIdForReply}', '${rv.author}')"><i class="ph-bold ph-chat-teardrop"></i> Trả lời</button>
+                        </div>
+                        ${deleteBtn}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderMainReviews(reviews) {
+            const container = document.getElementById('reviews-gallery');
+            if(!container) return;
+            container.innerHTML = '';
+            
+            if (reviews.length === 0) {
+                container.innerHTML = '<p style="text-align:center; width:100%; color:var(--text-muted)">Chưa có đánh giá nào. Hãy là người đầu tiên!</p>'; return;
+            }
+
+            const parentReviews = reviews.filter(r => !r.parentId);
+            parentReviews.sort((a,b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+
+            parentReviews.forEach(parent => {
+                let threadHtml = `<div class="review-thread">`;
+                threadHtml += buildReviewCardHtml(parent, false);
+
+                const childCount = reviews.filter(r => r.parentId === parent.id).length;
+                if (childCount > 0) {
+                    threadHtml += `<button class="view-replies-btn" onclick="openThread('${parent.id}')"><i class="ph-bold ph-chat-centered-text"></i> Xem ${childCount} bình luận</button>`;
+                } else {
+                    threadHtml += `<button class="view-replies-btn" onclick="replyTo('${parent.id}', '${parent.author}')"><i class="ph-bold ph-chat-centered-text"></i> Bình luận</button>`;
+                }
+
+                threadHtml += `</div>`;
+                container.innerHTML += threadHtml;
+            });
+        }
+
+        // HÀM MỞ POPUP LUỒNG (THREAD MODAL)
+        window.openThread = (parentId, authorToReply = null, shouldFocus = true) => {
+            window.activeThreadId = parentId;
+            const parent = window.currentReviews.find(r => r.id === parentId);
+            const children = window.currentReviews.filter(r => r.parentId === parentId);
+            
+            children.sort((a,b) => (a.createdAt?.toMillis() || 0) - (b.createdAt?.toMillis() || 0));
+
+            let html = buildReviewCardHtml(parent, true);
+            if (children.length > 0) {
+                html += `<div class="replies-wrapper">`;
+                children.forEach(child => { html += buildReviewCardHtml(child, true); });
+                html += `</div>`;
+            }
+            
+            document.getElementById('thread-content-body').innerHTML = html;
+            document.getElementById('thread-overlay').classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            // Xử lý Gắn tên người dùng vào ô Input
+            const input = document.getElementById('thread-reply-input');
+            if (authorToReply) {
+                input.value = `@${authorToReply}: `;
+            }
+
+            if (shouldFocus) {
+                setTimeout(() => {
+                    input.focus();
+                    const body = document.getElementById('thread-content-body');
+                    body.scrollTo({ top: body.scrollHeight, behavior: 'smooth' });
+                }, 100);
+            }
+        }
+
+        window.closeThread = () => {
+            document.getElementById('thread-overlay').classList.remove('active');
+            document.body.style.overflow = 'auto';
+            window.activeThreadId = null;
+            document.getElementById('thread-reply-input').value = '';
+        }
+
+        // KHI BẤM "TRẢ LỜI" -> CHỈ LÀM NHIỆM VỤ MỞ POPUP VÀ GẮN @TÊN
+        window.replyTo = (parentId, author) => {
+            openThread(parentId, author, true);
+        }
+
+        // GỬI BÌNH LUẬN GỐC (Ở ngoài)
+        window.submitReview = async () => {
+            const nameInput = document.getElementById('rv-name');
+            const contentInput = document.getElementById('rv-content');
+            const n = isAdmin ? currentProfile.name : (nameInput.value.trim() || 'Khách Ẩn Danh');
+            const c = contentInput.value.trim();
+
+            if(!c) { Swal.fire({icon: 'warning', title: 'Khoan đã!', text: 'Vui lòng nhập nội dung đánh giá.', customClass: {popup: 'custom-swal'}}); return; }
+
+            const btn = document.querySelector('.review-actions-row button');
+            btn.innerHTML = '<i class="ph-bold ph-spinner ph-spin"></i> Đang gửi...'; btn.disabled = true;
 
             try {
-                if (isLiked) {
-                    // Unlike
-                    localStorage.removeItem('liked_' + id);
-                    icon.classList.remove('liked');
-                    icon.setAttribute('fill', 'none');
-                    icon.setAttribute('stroke', 'currentColor');
-                    countSpan.innerText = Math.max(0, currentLikes - 1);
-                    
-                    await updateDoc(docRef, { likes: increment(-1) });
-                } else {
-                    // Like
-                    localStorage.setItem('liked_' + id, 'true');
-                    icon.classList.add('liked');
-                    icon.setAttribute('fill', '#ef4444');
-                    icon.setAttribute('stroke', '#ef4444');
-                    countSpan.innerText = currentLikes + 1;
-                    
-                    await updateDoc(docRef, { likes: increment(1) });
-                }
+                await addDoc(collection(db, "reviews"), {
+                    author: n, content: c, guestId: guestId, isAdmin: isAdmin, likes: 0, createdAt: serverTimestamp()
+                });
+                contentInput.value = '';
+                Swal.fire({icon: 'success', title: 'Thành công', timer: 1500, showConfirmButton: false, customClass: {popup: 'custom-swal'}});
+            } catch (error) { Swal.fire({icon: 'error', title: 'Lỗi!', text: error.message}); 
+            } finally { btn.innerHTML = '<i class="ph-bold ph-paper-plane-tilt"></i> Gửi bình luận'; btn.disabled = false; }
+        }
+
+        // GỬI CÂU TRẢ LỜI (TRONG POPUP)
+        window.submitThreadReply = async () => {
+            if (!window.activeThreadId) return;
+            const input = document.getElementById('thread-reply-input');
+            const c = input.value.trim();
+            if (!c) { input.focus(); return; }
+
+            const nameInput = document.getElementById('rv-name');
+            const n = isAdmin ? currentProfile.name : (nameInput.value.trim() || 'Khách Ẩn Danh');
+
+            input.disabled = true;
+
+            try {
+                await addDoc(collection(db, "reviews"), {
+                    author: n,
+                    content: c,
+                    parentId: window.activeThreadId,
+                    guestId: guestId,
+                    isAdmin: isAdmin,
+                    likes: 0,
+                    createdAt: serverTimestamp()
+                });
+                input.value = '';
+                // Cuộn xuống dòng tin nhắn mới nhất
+                setTimeout(() => {
+                    const body = document.getElementById('thread-content-body');
+                    body.scrollTo({ top: body.scrollHeight, behavior: 'smooth' });
+                }, 100);
             } catch (error) {
-                console.error("Lỗi cập nhật Like:", error);
-                Swal.fire({ icon: 'error', title: 'Úi!', text: 'Không thể thả tim lúc này. Hãy kiểm tra lại Firebase Rules.', toast: true, position: 'bottom-end', showConfirmButton: false, timer: 3000, customClass: { popup: 'custom-swal' } });
+                Swal.fire({icon: 'error', title: 'Lỗi!', text: error.message, customClass: {popup: 'custom-swal'}});
+            } finally {
+                input.disabled = false;
+                input.focus();
             }
         }
 
-        // ===================================
-        // THÊM, SỬA, XÓA DỰ ÁN
-        // ===================================
-        document.getElementById('add-btn').onclick = async () => {
-            if(!isAdmin) return;
-            const { value: f } = await Swal.fire({
-                title: 'Thêm Dự Án Mới',
-                html: `<input id="sw-t" class="swal2-input" placeholder="Tên dự án"><input id="sw-d" class="swal2-input" placeholder="Mô tả ngắn"><input id="sw-l" class="swal2-input" placeholder="Link Website"><input id="sw-g" class="swal2-input" placeholder="Tags (Cắt bằng dấu phẩy)">`,
-                preConfirm: () => ({ t: document.getElementById('sw-t').value, d: document.getElementById('sw-d').value, l: document.getElementById('sw-l').value, g: document.getElementById('sw-g').value }),
-                showCancelButton: true, confirmButtonText: 'Đăng Lên', cancelButtonText: 'Hủy', customClass: { popup: 'custom-swal' }
-            });
-
-            if (f && f.t && f.d) {
-                Swal.fire({ title: 'Đang lưu...', didOpen: () => Swal.showLoading(), customClass: { popup: 'custom-swal' } });
-                try {
-                    await addDoc(collection(db, "projects"), {
-                        title: f.t, desc: f.d, link: f.l,
-                        tags: f.g.split(',').map(x => x.trim()).filter(x => x !== ""),
-                        likes: 0, // Mặc định bài mới có 0 lượt thích
-                        createdAt: serverTimestamp()
-                    });
-                    Swal.fire({ icon: 'success', title: 'Đã lưu!', timer: 1500, showConfirmButton: false, customClass: { popup: 'custom-swal' } });
-                } catch (e) { Swal.fire({ icon: 'error', title: 'Lỗi!', text: e.message, customClass: { popup: 'custom-swal' }}); }
+        // Lắng nghe sự kiện bấm nút Enter để gửi nhanh trong khung chat
+        document.getElementById('thread-reply-input')?.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                submitThreadReply();
             }
-        };
+        });
 
-        window.editProject = async (id) => {
-            if(!isAdmin) return;
-            const project = window.projectsData.find(p => p.id === id);
-            if (!project) return;
-
-            const { value: f } = await Swal.fire({
-                title: 'Sửa Dự Án',
-                html: `<input id="sw-t" class="swal2-input" placeholder="Tên dự án" value="${project.title}"><input id="sw-d" class="swal2-input" placeholder="Mô tả ngắn" value="${project.desc}"><input id="sw-l" class="swal2-input" placeholder="Link Website" value="${project.link || ''}"><input id="sw-g" class="swal2-input" placeholder="Tags (Cắt bằng dấu phẩy)" value="${(project.tags || []).join(', ')}">`,
-                preConfirm: () => ({ t: document.getElementById('sw-t').value, d: document.getElementById('sw-d').value, l: document.getElementById('sw-l').value, g: document.getElementById('sw-g').value }),
-                showCancelButton: true, confirmButtonText: 'Cập nhật', cancelButtonText: 'Hủy', customClass: { popup: 'custom-swal' }
-            });
-
-            if (f && f.t && f.d) {
-                Swal.fire({ title: 'Đang cập nhật...', didOpen: () => Swal.showLoading(), customClass: { popup: 'custom-swal' } });
-                try {
-                    await updateDoc(doc(db, "projects", id), {
-                        title: f.t, desc: f.d, link: f.l,
-                        tags: f.g.split(',').map(x => x.trim()).filter(x => x !== "")
-                    });
-                    Swal.fire({ icon: 'success', title: 'Đã Cập Nhật!', timer: 1500, showConfirmButton: false, customClass: { popup: 'custom-swal' } });
-                } catch (e) { Swal.fire({ icon: 'error', title: 'Lỗi!', text: e.message, customClass: { popup: 'custom-swal' }}); }
-            }
-        }
-
-        window.deleteProject = async (id) => {
-            if(!isAdmin) return;
-            const { isConfirmed } = await Swal.fire({ title: 'Chắc chắn xóa chứ?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'Xóa vĩnh viễn', customClass: { popup: 'custom-swal' } });
+        // CÁC HÀM XÓA & THÍCH BÌNH LUẬN (GIỮ NGUYÊN)
+        window.deleteReview = async (id) => {
+            const { isConfirmed } = await Swal.fire({ title: 'Xóa bình luận này?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'Xóa', customClass: { popup: 'custom-swal' } });
             if (isConfirmed) {
-                Swal.fire({ title: 'Đang xóa...', didOpen: () => Swal.showLoading(), customClass: { popup: 'custom-swal' } });
-                try {
-                    await deleteDoc(doc(db, "projects", id));
-                    Swal.fire({ icon: 'success', title: 'Đã Xóa', timer: 1500, showConfirmButton: false, customClass: { popup: 'custom-swal' } });
-                } catch (error) { Swal.fire({ icon: 'error', title: 'Lỗi Xóa', text: error.message, customClass: { popup: 'custom-swal' }}); }
+                try { 
+                    await deleteDoc(doc(db, "reviews", id)); 
+                    const children = window.currentReviews.filter(r => r.parentId === id);
+                    children.forEach(child => deleteDoc(doc(db, "reviews", child.id)));
+                } 
+                catch (error) { Swal.fire({ icon: 'error', title: 'Lỗi', text: error.message, customClass: {popup: 'custom-swal'} }); }
             }
         }
 
-        // GIAO DIỆN CƠ BẢN
+        window.toggleRvLike = async (btn, id) => {
+            const icon = btn.querySelector('.ph-heart'); const cntSpan = btn.querySelector('.rv-like-cnt');
+            const isLiked = localStorage.getItem('rv_liked_' + id) === 'true'; const docRef = doc(db, "reviews", id);
+            let currentLikes = parseInt(cntSpan.innerText) || 0;
+
+            if (isLiked) {
+                localStorage.removeItem('rv_liked_' + id); icon.className = 'ph-heart ph-bold'; cntSpan.innerText = Math.max(0, currentLikes - 1);
+                updateDoc(docRef, { likes: increment(-1) }).catch(e=>console.log(e));
+            } else {
+                localStorage.setItem('rv_liked_' + id, 'true'); icon.className = 'ph-heart ph-fill liked'; cntSpan.innerText = currentLikes + 1;
+                updateDoc(docRef, { likes: increment(1) }).catch(e=>console.log(e));
+            }
+        }
+
+        // ĐIỀU HƯỚNG GIAO DIỆN
         window.switchTab = (id) => {
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            if(id === 'home') document.querySelectorAll('.nav-btn')[0].classList.add('active');
-            if(id === 'projects') document.querySelectorAll('.nav-btn')[1].classList.add('active');
+            
+            const btnMap = {'home': 0, 'skills': 1, 'projects': 2, 'reviews': 3, 'contact': 4};
+            if(btnMap[id] !== undefined) document.querySelectorAll('.nav-btn')[btnMap[id]].classList.add('active');
+            
             document.getElementById(id).classList.add('active');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
+        
         window.toggleTheme = () => {
             const h = document.documentElement;
             h.setAttribute('data-theme', h.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
